@@ -14,6 +14,8 @@ import time
 from commander_msgs.msg import Command
 from commander_msgs.msg import State
 
+from functools import partial   #Used for parsing arguments to callback function
+
 #Defining pubs and subs
 pubs = []
 subs = []
@@ -41,10 +43,9 @@ def main(args=None):
     create_work_order()     #Puts products in work_order in a predefined pattern
 
     while not(product_in_station[0] == None and product_in_station[1] == None and product_in_station[2] == None) or len(work_order) != 0:
+        #Skulle kunna ha en while(True) med en loop inuti som loopar igenom alla states och sätter en variabel därefter. Efter den innersta loopen en if-sats som breaker den yttersta.
 
-        station = noOfStations - 1     #Last station
-
-        while station >= 0:
+        for station in range(noOfStations-1, -1, -1):
 
             print("Checking station " + str(station))
             time.sleep(sleep_time)
@@ -84,8 +85,6 @@ def main(args=None):
                     print("Nothing to do")
                     time.sleep(sleep_time)
 
-            station -= 1
-
     print(product_in_station)
     print(work_order)
 
@@ -96,37 +95,23 @@ def init(j):
     rclpy.init()
     node = rclpy.create_node('command_node')
 
-    #pubs.append(node.create_publisher(Command, 'cmd0'))
-    #pubs.append(node.create_publisher(Command, 'cmd1'))
-    #pubs.append(node.create_publisher(Command, 'cmd2'))
-    subs.append(node.create_subscription(State, 'state0', state0_callback))
-    subs.append(node.create_subscription(State, 'state1', state1_callback))     #Would be nice to make a general solution with subs instead of hardcoding
-    subs.append(node.create_subscription(State, 'state2', state2_callback))     #But don't know how to make the methods in a good way
-
-    i = 0
-    while j > i:
+    for i in range(j):
         pubs.append(node.create_publisher(Command, 'cmd' + str(i)))
 
         product_in_station.append(None)
 
         cmd_msgs.append(Command())
         state_msgs.append(State())
-        i += 1
 
+        subs.append(node.create_subscription(State, 'state' + str(i), partial(state_callback, i)))
     return node
 
-def state0_callback(state_msg):
-    state_msgs[0] = state_msg
-
-def state1_callback(state_msg):
-    state_msgs[1] = state_msg
-
-def state2_callback(state_msg):
-    state_msgs[2] = state_msg
+def state_callback(station, state_msg):
+    state_msgs[station] = state_msg
 
 def create_work_order():
     work_order.append(product_a)
-    work_order.append(product_b)
+    #work_order.append(product_b)
     #work_order.append(product_a)
 
 def station_done(station):
