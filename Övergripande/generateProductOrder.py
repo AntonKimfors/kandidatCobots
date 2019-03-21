@@ -1,5 +1,5 @@
 '''
-Class to generate a product order for testing purposes in the machine assembly
+Function to generate a product order for testing purposes in the machine assembly
 '''
 
 import random
