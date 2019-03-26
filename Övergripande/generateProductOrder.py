@@ -1,8 +1,9 @@
-'''
-Function to generate a product order for testing purposes in the machine
-assembly.
-Also contains errorhandling for incorrect inputs
-'''
+#   -------------------------------------------------------------------------------
+#   Description:
+#   Function to generate a product order for testing purposes in the machine
+#   assembly.
+#   Also contains errorhandling for incorrect inputs
+#   -------------------------------------------------------------------------------
 
 import random
 

@@ -44,10 +44,10 @@ finished = 'finished'
 node = None
 
 # Number of stations, hardcoded/predefined
-noOfStations = 3
+NO_OF_STATIONS = 3
 
 # Sleep time where sleep is implemented
-sleep_time = 1
+SLEEP_TIME = 1
 
 
 def main(args=None):
@@ -56,7 +56,7 @@ def main(args=None):
     global node
 
     # Initializes node, creates pubs, subs and initializes the message arrays
-    node = initialize(noOfStations)
+    node = initialize(NO_OF_STATIONS)
 
     # Generate product order
     product_order = gpo.generate_product_order(
@@ -72,21 +72,21 @@ def main(args=None):
     while not all_stations_empty or len(work_order) != 0:
 
         # From last station index down to 0
-        for station in range(noOfStations-1, -1, -1):
+        for station in range(NO_OF_STATIONS-1, -1, -1):
 
             print("Checking station {}".format(str(station)))
             rclpy.spin_once(node)
-            time.sleep(sleep_time)
+            time.sleep(SLEEP_TIME)
 
             # If station is not empty
             if cmd_msgs[station].product_name != '':
 
                 print("Checking if station {} is done".format(str(station)))
-                time.sleep(sleep_time)
+                time.sleep(SLEEP_TIME)
 
                 if check_state(station) == finished:
                     # Last station => no station to send forward to
-                    if station == noOfStations - 1:
+                    if station == NO_OF_STATIONS - 1:
                         station_done(station)
 
                     # Not last station => check forward
@@ -122,7 +122,7 @@ def main(args=None):
                         send_command(station)
                 else:
                     print("Nothing to do")
-                    time.sleep(sleep_time)
+                    time.sleep(SLEEP_TIME)
 
         all_stations_empty = is_all_stations_empty()
 
@@ -137,11 +137,11 @@ def state_callback(station, state_msg: str):
 
 
 # Initializes node, creates pubs and subs and initializes the message arrays
-def initialize(noOfStations: int):
+def initialize(NO_OF_STATIONS: int):
     rclpy.init()
     node = rclpy.create_node('command_node')
 
-    for i in range(noOfStations):
+    for i in range(NO_OF_STATIONS):
         pubs.append(node.create_publisher(Command, 'cmd {}'.format(str(i))))
 
         cmd_msgs.append(Command())
@@ -189,7 +189,7 @@ def station_done(station):
         rclpy.spin_once(node)
         print("Pubing run=false until state=init on station {}".format(
                 str(station)))
-        time.sleep(sleep_time)
+        time.sleep(SLEEP_TIME)
 
 
 # Sends command to station and puts run to true when handshake is established
@@ -203,7 +203,7 @@ def send_command(station):
         print("Waiting on station {} with the message {}".format(
             str(station), cmd_msgs[station].command))
         rclpy.spin_once(node)
-        time.sleep(sleep_time)
+        time.sleep(SLEEP_TIME)
 
     cmd_msgs[station].run = True
 
@@ -212,7 +212,7 @@ def send_command(station):
         rclpy.spin_once(node)
         print("Pubing run=true until state=executing on station {}".format(
               str(station)))
-        time.sleep(sleep_time)
+        time.sleep(SLEEP_TIME)
 
 
 if __name__ == '__main__':
