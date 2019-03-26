@@ -20,13 +20,12 @@ from functools import partial
 # Generating product order for testing purposes
 import generateProductOrder as gpo
 
-
 # Defining pubs and subs
 pubs = []
 subs = []
 
 # Defining products, a station array and work order array
-products = ["product_a", "product_b"]
+products = ["Sedan", "Jeep"]
 NUMBEROFPRODUCTS = 10
 
 # First-in-first-out order, gets popped when going to the first station
@@ -75,14 +74,14 @@ def main(args=None):
         # From last station index down to 0
         for station in range(noOfStations-1, -1, -1):
 
-            print("Checking station " + str(station))
+            print("Checking station {}".format(str(station)))
             rclpy.spin_once(node)
             time.sleep(sleep_time)
 
             # If station is not empty
             if cmd_msgs[station].product_name != '':
 
-                print("Checking if station " + str(station) + " is done")
+                print("Checking if station {} is done".format(str(station)))
                 time.sleep(sleep_time)
 
                 if check_state(station) == finished:
@@ -101,8 +100,8 @@ def main(args=None):
                         send_command(station+1)
 
                     else:
-                        print("Station " + str(station) + " is done but the \
-                             station ahead is not ready")
+                        print("Station {} is done but the \
+                              station ahead is not ready".format(str(station)))
 
                 else:
                     print("Station " + str(station) + " is not done")
@@ -113,12 +112,12 @@ def main(args=None):
                 if station == 0 and len(work_order) != 0:
                     if check_state(station) != init:
 
-                        print("Station " + str(station) + " is not ready for \
-                             another work order")
+                        print("Station {} is not ready for \
+                             another work order".format(str(station)))
 
                     else:
-                        print("Send in the next order to station " +
-                              str(station))
+                        print("Send in the next order to station {}".format(
+                              str(station)))
                         cmd_msgs[station].product_name = work_order.pop(0)
                         send_command(station)
                 else:
@@ -143,12 +142,12 @@ def initialize(noOfStations: int):
     node = rclpy.create_node('command_node')
 
     for i in range(noOfStations):
-        pubs.append(node.create_publisher(Command, 'cmd' + str(i)))
+        pubs.append(node.create_publisher(Command, 'cmd {}'.format(str(i))))
 
         cmd_msgs.append(Command())
         state_msgs.append(State())
 
-        subs.append(node.create_subscription(State, 'state' + str(i),
+        subs.append(node.create_subscription(State, 'state {}'.format(str(i)),
                     partial(state_callback, i)))
     return node
 
@@ -176,8 +175,8 @@ def check_state(station):
     if state == init or state == executing or state == finished:
         return state
     else:
-        raise Exception("Unknown state on station " + str(station) + ": " +
-                        state)
+        raise Exception("Unknown state on station {}: {}".format(
+                        str(station), state))
 
 
 # Sets a station to init with handshake
@@ -188,20 +187,21 @@ def station_done(station):
     while check_state(station) != init:
         pubs[station].publish(cmd_msgs[station])
         rclpy.spin_once(node)
-        print("Pubing run=false until state=init on station " + str(station))
+        print("Pubing run=false until state=init on station {}".format(
+                str(station)))
         time.sleep(sleep_time)
 
 
 # Sends command to station and puts run to true when handshake is established
 def send_command(station):
-    cmd_msgs[station].command = "Assemble in station " + str(station)
+    cmd_msgs[station].command = "Assemble in station {}".format(str(station))
     cmd_msgs[station].run = False
 
     # Waiting for handshake for the command
     while state_msgs[station].cmd != cmd_msgs[station].command:
         pubs[station].publish(cmd_msgs[station])
-        print("Waiting on station " + str(station) + " with the message " +
-              cmd_msgs[station].command)
+        print("Waiting on station {} with the message {}".format(
+            str(station), cmd_msgs[station].command))
         rclpy.spin_once(node)
         time.sleep(sleep_time)
 
@@ -210,8 +210,8 @@ def send_command(station):
     while check_state(station) != executing:
         pubs[station].publish(cmd_msgs[station])
         rclpy.spin_once(node)
-        print("Pubing run=true until state=executing on station " +
-              str(station))
+        print("Pubing run=true until state=executing on station {}".format(
+              str(station)))
         time.sleep(sleep_time)
 
 

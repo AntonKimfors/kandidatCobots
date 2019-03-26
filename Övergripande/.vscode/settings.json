@@ -2,5 +2,5 @@
     "python.linting.pylintEnabled": false,
     "python.linting.pep8Enabled": true,
     "python.linting.enabled": true,
-    "python.pythonPath": "D:\\Program\\Anaconda\\python.exe"
+    "python.pythonPath": "/Users/sebastianbrink/anaconda3/bin/python"
 }
