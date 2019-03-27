@@ -1,0 +1,10 @@
+-
+  ros1_package_name: 'ros_intro_course'
+  ros1_message_name: 'Command'
+  ros2_package_name: 'commander_msgs'
+  ros2_message_name: 'Command'
+  fields_1_to_2:
+    command: 'command'
+    run: 'run'
+    product_name: 'product_name'
+
