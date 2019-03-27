@@ -20,9 +20,9 @@ from functools import partial
 # Generating product order for testing purposes
 import generateProductOrder as gpo
 
-# Defining pubs and subs
-pubs = []
-subs = []
+# Defining publishers and subscriptors
+publishers = []
+subscriptors = []
 
 # Defining products, a station array and work order array
 products = ["Sedan", "Jeep"]
@@ -53,9 +53,9 @@ SLEEP_TIME = 1
 def main(args=None):
     input("Press Enter to continue...")
 
+    # Initializes node, creates publishers, subscriptors and initializes the
+    # message arrays
     global node
-
-    # Initializes node, creates pubs, subs and initializes the message arrays
     node = initialize(NO_OF_STATIONS)
 
     # Generate product order
@@ -65,10 +65,10 @@ def main(args=None):
     # Puts products in work_order in a hardcoded/predefined pattern
     create_work_order(product_order)
 
-    all_stations_empty = is_all_stations_empty()
-
     # While there is something in at least one of the stations or if the work
     # order is not empty
+    all_stations_empty = is_all_stations_empty()
+
     while not all_stations_empty or len(work_order) != 0:
 
         # From last station index down to 0
@@ -136,19 +136,21 @@ def state_callback(station, state_msg: str):
     state_msgs[station] = state_msg
 
 
-# Initializes node, creates pubs and subs and initializes the message arrays
+# Initializes node, creates publishers and subscriptors and initializes the
+# message arrays
 def initialize(NO_OF_STATIONS: int):
     rclpy.init()
     node = rclpy.create_node('command_node')
 
     for i in range(NO_OF_STATIONS):
-        pubs.append(node.create_publisher(Command, 'cmd {}'.format(str(i))))
+        publishers.append(node.create_publisher(
+            Command, 'cmd {}'.format(str(i))))
 
         cmd_msgs.append(Command())
         state_msgs.append(State())
 
-        subs.append(node.create_subscription(State, 'state {}'.format(str(i)),
-                    partial(state_callback, i)))
+        subscriptors.append(node.create_subscription(State, 'state {}'.format(
+            str(i)), partial(state_callback, i)))
     return node
 
 
@@ -185,7 +187,7 @@ def station_done(station):
     cmd_msgs[station].run = False
 
     while check_state(station) != init:
-        pubs[station].publish(cmd_msgs[station])
+        publishers[station].publish(cmd_msgs[station])
         rclpy.spin_once(node)
         print("Pubing run=false until state=init on station {}".format(
                 str(station)))
@@ -199,7 +201,7 @@ def send_command(station):
 
     # Waiting for handshake for the command
     while state_msgs[station].cmd != cmd_msgs[station].command:
-        pubs[station].publish(cmd_msgs[station])
+        publishers[station].publish(cmd_msgs[station])
         print("Waiting on station {} with the message {}".format(
             str(station), cmd_msgs[station].command))
         rclpy.spin_once(node)
@@ -208,7 +210,7 @@ def send_command(station):
     cmd_msgs[station].run = True
 
     while check_state(station) != executing:
-        pubs[station].publish(cmd_msgs[station])
+        publishers[station].publish(cmd_msgs[station])
         rclpy.spin_once(node)
         print("Pubing run=true until state=executing on station {}".format(
               str(station)))
