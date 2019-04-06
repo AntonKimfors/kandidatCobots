@@ -3,9 +3,12 @@ import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
 
-# Author: Andrew Dai
+# Original Author: Andrew Dai
+# Author: Marcus Lindvärn
 # This ROS Node converts Joystick inputs from the joy node
-# into commands for turtlesim
+# into commands for HRP
+# Small changes has been made from the original file to make 
+# it usable for this purpose
 
 # Receives joystick messages (subscribed to Joy topic)
 # then converts the joysick inputs into Twist commands
@@ -21,13 +24,13 @@ def callback(data):
 
 # Intializes everything
 def start():
-    # publishing to "turtle1/cmd_vel" to control turtle1
+    # publishing to "/cmd_vel" to control turtle1
     global pub
     pub = rospy.Publisher('/cmd_vel', Twist)
     # subscribed to joystick inputs on topic "joy"
     rospy.Subscriber("joy", Joy, callback)
     # starts the node
-    rospy.init_node('Joy2Turtle')
+    rospy.init_node('Joy2HRP')
     rospy.spin()
 
 if __name__ == '__main__':
