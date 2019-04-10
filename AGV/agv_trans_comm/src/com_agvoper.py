@@ -6,6 +6,7 @@ from sensor_msgs.msg import Joy
 from agv_trans_comm.msg import ButtonPressed
 from agv_trans_comm.msg import Command
 from agv_trans_comm.msg import State
+from os import system
 
 
 
@@ -21,6 +22,7 @@ class agv_comms():
         self.last_command_recieved = ""
         self.last_product_recieved = ""
         self.last_run_recieved = False
+        self.last_sent_cmd = ""
         agv_state.message = ""
         agv_state.cmd = ""
         agv_state.state = ""
