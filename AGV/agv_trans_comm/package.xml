@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>hrp_translate</name>
+  <name>agv_trans_comm</name>
   <version>0.0.0</version>
   <description>The hrp_translate package</description>
 
