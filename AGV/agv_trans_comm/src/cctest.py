@@ -44,7 +44,7 @@ class test_cc():
         #print ("bpressed: " + data.bpress + '\n')
         # if A is pressed, give new mission
         if (data.apress == True):
-            self.last_agv_cmd_sent = "go to 0"
+            self.last_agv_cmd_sent = "Go to 0"
             cc_state.command = self.last_agv_cmd_sent
             cc_state.run = True
             cc_state.product_name = "greg"
