@@ -13,7 +13,6 @@ class test_cc():
     def __init__ (self):
         global cc_state
         cc_state = Command()
-        #__init__(self)
         self.last_agv_cmd_recieved = ""
         self.last_agv_cmd_sent = ""
         self.last_run_sent = False
