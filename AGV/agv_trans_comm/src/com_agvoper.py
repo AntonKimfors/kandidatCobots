@@ -86,9 +86,11 @@ class agv_comms():
                 self.refresh_view()
 
     def refresh_view(self):
-         print('\rCurrent command: ' + self.current_cmd )
-         print('\rCurrent State: ' + self.current_state)
-         print('\rRun: ' + str(self.last_run_recieved))
+        system('clear')
+        print('Last sent command:' + self.last_sent_cmd)
+        print('Current command: ' + self.current_cmd )
+        print('Current State: ' + self.current_state)
+        print('Run: ' + str(self.last_run_recieved))
       
 
 if __name__ == '__main__':
@@ -96,4 +98,3 @@ if __name__ == '__main__':
         agv_comms()
     except rospy.ROSInterruptException:
         pass
-
