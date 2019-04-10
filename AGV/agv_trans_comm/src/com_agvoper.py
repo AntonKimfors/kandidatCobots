@@ -44,11 +44,11 @@ class agv_comms():
         #if a new command is recieved, update current command and refresh the view
         print ("last_command_recieved: " + self.last_command_recieved + '\n')
         print ("data.command: " + data.command + '\n')
-        print (last_command_recieved != data.command)
+        print (self.last_command_recieved != data.command)
         if (self.last_command_recieved != data.command):
             self.last_command_recieved = data.command
             self.current_cmd = data.command
-            agv_state.cmd = current_cmd
+            agv_state.cmd = self.current_cmd
             self.refresh_view()
         
         if (self.last_run_recieved == False and self.current_state == "finished"):
