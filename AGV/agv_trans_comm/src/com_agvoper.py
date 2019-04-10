@@ -54,21 +54,29 @@ class agv_comms():
 
 
     def callback_button_state(self, data):
-        #agv_state = State()
-        # if X is pressed, set status and send
+
+        # if Run is set to False and Current status is finished, set status to init
+        if (self.last_run_recieved == False and self.current_state == "finished"):
+            self.current_state = "init"
+            self.refresh_view()
+        # if current status is init and x is pressed, set status to executing and pub
         if (self.current_state == "init"):
             if (data.xpress == True):
                 self.current_state = "executing"
                 self.current_cmd = self.last_command_recieved
+                self.last_sent_cmd = self.current_state
                 agv_state.state = self.current_state
                 agv_state.cmd = self.current_cmd
                 self.ccpub.publish(agv_state)
                 self.refresh_view()
+            #Add accept button ? 
 
-        # if B is pressed, set status and send
+
+        # if current status is Exec and B is pressed, set status to finished and pub
         if (self.current_state == "executing"):
             if (data.bpress == True):
                 self.current_state = "finished"
+                self.last_sent_cmd = self.current_state
                 agv_state.state = self.current_state
                 self.current_cmd = ""
                 agv_state.cmd = self.current_cmd
