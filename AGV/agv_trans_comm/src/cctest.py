@@ -38,7 +38,7 @@ class test_cc():
         #if recieved cmd is equal to send cmd, set run to True
 
         if (self.last_agv_cmd_sent == data.cmd):
-            if (self.last_state_recieved = "init"):
+            if (self.last_state_recieved == "init"):
                 cc_state.run=True
         
         #always respond to a sent message at /AGV_state by responding to /commandcenter 
