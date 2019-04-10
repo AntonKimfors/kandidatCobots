@@ -24,28 +24,33 @@ class test_cc():
 
         
         self.cc_state_pub = rospy.Publisher('/commandcenter', Command)
-        #subscribing to the comandcenter topic as well as the buttionstates from the teleop.
+        #subscribing to the commandcenter topic as well as the button_states from the teleop.
         rospy.Subscriber("/AGV_state", State, self.callback_agvtest)
         rospy.Subscriber("/button_state", ButtonPressed, self.callback_button_state)
         # starts the node
         rospy.init_node('testcc_node')
         rospy.spin()
+
+    # receive and update states when a message is published to /AGV_state
     def callback_agvtest(self, data):
-        #if (last_agv_cmd_sent == data.cmd):
-        #    cc_state.run=True
+        self.last_agv_cmd_recieved = data.cmd
+        self.last_state_recieved = data.state
+        #if recieved cmd is equal to send cmd, set run to True
+
+        if (self.last_agv_cmd_sent == data.cmd):
+            if (self.last_state_recieved = "init"):
+                cc_state.run=True
         
-        #self.cc_state_pub.publish(cc_state)
-        print('callback_agvtest')
+        #always respond to a sent message at /AGV_state by responding to /commandcenter 
+        self.cc_state_pub.publish(cc_state)
+    
     def callback_button_state(self, data):
         #agv_state = State()
-        # if X is pressed, set status and send
-        #print ("xpressed: " + data.xpress + '\n')
-        #print ("bpressed: " + data.bpress + '\n')
-        # if A is pressed, give new mission
+        # if A is pressed, send new mission
         if (data.apress == True):
             self.last_agv_cmd_sent = "Go to 0"
             cc_state.command = self.last_agv_cmd_sent
-            cc_state.run = True
+            cc_state.run = self.last_run_sent
             cc_state.product_name = "greg"
             self.cc_state_pub.publish(cc_state)
         # if B is pressed, set status to not running params and send
