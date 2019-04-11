@@ -36,11 +36,9 @@ class test_cc():
         self.last_agv_cmd_recieved = data.cmd
         self.last_state_recieved = data.state
         #if recieved cmd is equal to send cmd, set run to True
-
-        if (self.last_agv_cmd_sent == data.cmd):
-            if (self.last_state_recieved == "init"):
-                cc_state.run=True
         
+        if (self.last_agv_cmd_sent == data.cmd):
+            cc_state.run=True
         #always respond to a sent message at /AGV_state by responding to /commandcenter 
         self.cc_state_pub.publish(cc_state)
     
@@ -61,14 +59,9 @@ class test_cc():
         #Publish with new changes
             self.cc_state_pub.publish(cc_state)
 
-    def refresh_view(self):
-        print('Last command recieved: ' + self.last_agv_cmd_recieved)
-        print('Last command sent: ' + self.last_agv_cmd_sent)
-
     # Intializes everything
 if __name__ == '__main__':
     try:
         test_cc()
-        rospy.init_node('testCC')
     except rospy.ROSInterruptException:
         pass

@@ -47,20 +47,20 @@ class agv_comms():
             self.current_cmd = data.command
             agv_state.cmd = self.current_cmd
             self.refresh_view()
+            self.ccpub.publish(agv_state)
         # if Run is set to False and Current status is finished, set status to init
         if (self.last_run_recieved == False and self.current_state == "finished"):
             self.current_state = "init"
             agv_state.state = self.current_state
             self.refresh_view()
-            
-        #always anser a publish with a publish with current state. might need to change
-        self.ccpub.publish(agv_state)
-
+            self.ccpub.publish(agv_state)  
+        #always answer a publish with a publish with current state. might need to change
+        # self.ccpub.publish(agv_state)
 
     def callback_button_state(self, data):
         # if current status is init and x is pressed, set status to executing and pub
         # should a check that a command has been given, meaning either button to accept or auto accept mission
-        if (self.current_state == "init"): 
+        if (self.current_state == "init"):  # more requirements needed 
             if (data.xpress == True):
                 self.current_state = "executing"
                 self.current_cmd = self.last_command_recieved
