@@ -5,7 +5,7 @@
 # ----------------------------------------------------------------------------------------------------------------------#
 #   Christian Karlsson
 #   Kandidatarbete COBOTS
-#   V.1.0.0.
+#   V.2.0.0.
 # ----------------------------------------------------------------------------------------------------------------------#
 
 import rclpy
@@ -26,7 +26,7 @@ subscriptors = []
 
 # Defining products, a station array and work order array
 products = ["Sedan", "Jeep"]
-NUMBEROFPRODUCTS = 10
+NUMBEROFPRODUCTS = 2
 
 # First-in-first-out order, gets popped when going to the first station
 work_order = []
@@ -48,6 +48,9 @@ NO_OF_STATIONS = 3
 
 # Sleep time where sleep is implemented
 SLEEP_TIME = 1
+
+# Messages for the 3 different stations and AGV
+COMMAND_ARRAY = ["Kit", "Assemble", "Screw", "Move AGV to station"]
 
 
 def main(args=None):
@@ -151,6 +154,14 @@ def initialize(NO_OF_STATIONS: int):
 
         subscriptors.append(node.create_subscription(State, 'state{}'.format(
             str(i)), partial(state_callback, i)))
+
+    # Below is only for the bloody AGV
+    publishers.append(node.create_publisher(Command, 'cmdA'))
+    cmd_msgs.append(Command())
+    state_msgs.append(State())
+    subscriptors.append(node.create_subscription(State, 'stateA', partial(
+        state_callback, NO_OF_STATIONS)))
+
     return node
 
 
@@ -183,8 +194,9 @@ def check_state(station):
 
 # Sets a station to init with handshake
 def station_done(station):
-    cmd_msgs[station].product_name = ''
+    cmd_msgs[station].command = ''
     cmd_msgs[station].run = False
+    cmd_msgs[station].product_name = ''
 
     while check_state(station) != INIT:
         publishers[station].publish(cmd_msgs[station])
@@ -193,10 +205,48 @@ def station_done(station):
                 str(station)))
         time.sleep(SLEEP_TIME)
 
+    move_agv(station)
+
+
+# Moves the AGV to the next station
+def move_agv(station):
+    if station == NO_OF_STATIONS - 1:
+        next_station = 0
+    else:
+        next_station = station + 1
+
+    while check_state(NO_OF_STATIONS) != INIT:
+        print("Waiting for AGV to be in init state")
+        time.sleep(SLEEP_TIME)
+        rclpy.spin_once(node)
+
+    print("Moving AGV to station {}".format(next_station))
+    cmd_msgs[NO_OF_STATIONS].command = "{} {}".format(COMMAND_ARRAY[
+        NO_OF_STATIONS], str(next_station))
+    send_command(NO_OF_STATIONS)
+
+    while check_state(NO_OF_STATIONS) == EXECUTING:
+        print("Waiting for AGV to finish")
+        time.sleep(SLEEP_TIME)
+        rclpy.spin_once(node)
+
+    cmd_msgs[NO_OF_STATIONS].command = ''
+    cmd_msgs[NO_OF_STATIONS].run = False
+    cmd_msgs[NO_OF_STATIONS].product_name = ''
+
+    while check_state(NO_OF_STATIONS) != INIT:
+        publishers[NO_OF_STATIONS].publish(cmd_msgs[NO_OF_STATIONS])
+        rclpy.spin_once(node)
+        print("Pubing run=false until state=init on AGV")
+        time.sleep(SLEEP_TIME)
+
 
 # Sends command to station and puts run to true when handshake is established
 def send_command(station):
-    cmd_msgs[station].command = "Assemble in station {}".format(str(station))
+    # cmd_msgs[station].command = "Assemble in station {}".format(str(station))
+    if station != NO_OF_STATIONS:
+        cmd_msgs[station].command = COMMAND_ARRAY[station]
+
     cmd_msgs[station].run = False
 
     # Waiting for handshake for the command
