@@ -20,9 +20,9 @@ from functools import partial
 # Generating product order for testing purposes
 import commander_py.generateProductOrder as gpo
 
-# Defining publishers and subscriptors
+# Defining publishers and subscribers
 publishers = []
-subscriptors = []
+subscribers = []
 
 # Defining products, a station array and work order array
 products = ["Sedan", "Jeep"]
@@ -52,11 +52,14 @@ SLEEP_TIME = 1
 # Messages for the 3 different stations and AGV
 COMMAND_ARRAY = ["Kit", "Assemble", "Screw", "Move AGV to station"]
 
+# Tracks which station the agv is on
+agv_pos = 0
+
 
 def main(args=None):
     input("Press Enter to continue...")
 
-    # Initializes node, creates publishers, subscriptors and initializes the
+    # Initializes node, creates publishers, subscribers and initializes the
     # message arrays
     global node
     node = initialize(NO_OF_STATIONS)
@@ -87,7 +90,7 @@ def main(args=None):
                 print("Checking if station {} is done".format(str(station)))
                 time.sleep(SLEEP_TIME)
 
-                if check_state(station) == FINISHED:
+                if check_state(station) == FINISHED and agv_pos == station:
                     # Last station => no station to send forward to
                     if station == NO_OF_STATIONS - 1:
                         station_done(station)
@@ -107,7 +110,8 @@ def main(args=None):
                               station ahead is not ready".format(str(station)))
 
                 else:
-                    print("Station " + str(station) + " is not done")
+                    print('''Station {} is not done, or the AGV is not in
+                            position'''.format(str(station)))
 
             else:
                 # If nothing in the first station but the work_order is not
@@ -115,8 +119,8 @@ def main(args=None):
                 if station == 0 and len(work_order) != 0:
                     if check_state(station) != INIT:
 
-                        print("Station {} is not ready for \
-                             another work order".format(str(station)))
+                        print("Station {} not ready for new work order".format(
+                            str(station)))
 
                     else:
                         print("Send in the next order to station {}".format(
@@ -139,7 +143,7 @@ def state_callback(station, state_msg: str):
     state_msgs[station] = state_msg
 
 
-# Initializes node, creates publishers and subscriptors and initializes the
+# Initializes node, creates publishers and subscribers and initializes the
 # message arrays
 def initialize(NO_OF_STATIONS: int):
     rclpy.init()
@@ -152,14 +156,14 @@ def initialize(NO_OF_STATIONS: int):
         cmd_msgs.append(Command())
         state_msgs.append(State())
 
-        subscriptors.append(node.create_subscription(State, 'state{}'.format(
+        subscribers.append(node.create_subscription(State, 'state{}'.format(
             str(i)), partial(state_callback, i)))
 
-    # Below is only for the bloody AGV
+    # Below is only for the AGV
     publishers.append(node.create_publisher(Command, 'cmdA'))
     cmd_msgs.append(Command())
     state_msgs.append(State())
-    subscriptors.append(node.create_subscription(State, 'stateA', partial(
+    subscribers.append(node.create_subscription(State, 'stateA', partial(
         state_callback, NO_OF_STATIONS)))
 
     return node
@@ -183,8 +187,8 @@ def is_all_stations_empty():
 
 # Checks and returns the state of the station. Throws exception if state is
 # not recognized
-def check_state(station):
-    state = state_msgs[station].state
+def check_state(station: int):
+    state = state_msgs[station].state.lower()
     if state == INIT or state == EXECUTING or state == FINISHED:
         return state
     else:
@@ -193,7 +197,7 @@ def check_state(station):
 
 
 # Sets a station to init with handshake
-def station_done(station):
+def station_done(station: int):
     cmd_msgs[station].command = ''
     cmd_msgs[station].run = False
     cmd_msgs[station].product_name = ''
@@ -209,8 +213,8 @@ def station_done(station):
 
 
 # Moves the AGV to the next station
-def move_agv(station):
-    if station == NO_OF_STATIONS - 1:
+def move_agv(station: int):
+    if station >= NO_OF_STATIONS - 1:
         next_station = 0
     else:
         next_station = station + 1
@@ -221,7 +225,7 @@ def move_agv(station):
         rclpy.spin_once(node)
 
     print("Moving AGV to station {}".format(next_station))
-    cmd_msgs[NO_OF_STATIONS].command = "{} {}".format(COMMAND_ARRAY[
+    cmd_msgs[NO_OF_STATIONS].command = "{}: {}".format(COMMAND_ARRAY[
         NO_OF_STATIONS], str(next_station))
     send_command(NO_OF_STATIONS)
 
@@ -240,9 +244,12 @@ def move_agv(station):
         print("Pubing run=false until state=init on AGV")
         time.sleep(SLEEP_TIME)
 
+    global agv_pos
+    agv_pos = next_station
+
 
 # Sends command to station and puts run to true when handshake is established
-def send_command(station):
+def send_command(station: int):
     # cmd_msgs[station].command = "Assemble in station {}".format(str(station))
     if station != NO_OF_STATIONS:
         cmd_msgs[station].command = COMMAND_ARRAY[station]
