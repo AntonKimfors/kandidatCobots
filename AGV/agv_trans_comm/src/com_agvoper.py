@@ -60,7 +60,7 @@ class agv_comms():
     def callback_button_state(self, data):
         # if current status is init and x is pressed, set status to executing and pub
         # should a check that a command has been given, meaning either button to accept or auto accept mission
-        if (self.current_state == "init"):  # more requirements needed 
+        if (self.current_state == "init" and self.current_cmd != ""):  # more requirements needed 
             if (data.xpress == True):
                 self.current_state = "executing"
                 self.current_cmd = self.last_command_recieved
