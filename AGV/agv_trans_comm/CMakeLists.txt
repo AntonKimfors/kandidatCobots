@@ -83,7 +83,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES beaglecar
+#  LIBRARIES 
 #  CATKIN_DEPENDS rospy std_msgs
 #  DEPENDS system_lib
 )
@@ -100,19 +100,18 @@ include_directories(
 )
 
 ## Declare a cpp library
-# add_library(beaglecar
-#   src/${PROJECT_NAME}/beaglecar.cpp
+# add_library(
 # )
 
 ## Declare a cpp executable
-# add_executable(beaglecar_node src/beaglecar_node.cpp)
+# add_executable()
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(beaglecar_node beaglecar_generate_messages_cpp)
+# add_dependencies()
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(beaglecar_node
+# target_link_libraries(
 #   ${catkin_LIBRARIES}
 # )
 
@@ -131,7 +130,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS beaglecar beaglecar_node
+# install(TARGETS 
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -145,18 +144,16 @@ include_directories(
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(DIRECTORY launch/
+  DESTINATION ${PROJECT_NAME}/launch
+)
 
 #############
 ## Testing ##
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_beaglecar.cpp)
+# catkin_add_gtest()
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

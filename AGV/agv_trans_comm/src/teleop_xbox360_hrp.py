@@ -22,6 +22,8 @@ def callback(data):
     twist.linear.x = 0.4*data.axes[1]
     # horizontal left stick axis = turn rate
     twist.angular.z = 0.7*data.axes[0]
+    
+    
     buttonpress.xpress = False
     buttonpress.bpress = False
     buttonpress.apress = False  # TESTING

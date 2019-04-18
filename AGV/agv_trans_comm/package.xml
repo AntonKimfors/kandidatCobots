@@ -2,7 +2,7 @@
 <package>
   <name>agv_trans_comm</name>
   <version>0.0.0</version>
-  <description>The hrp_translate package</description>
+  <description>The agv_trans_comm package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
