@@ -58,14 +58,20 @@ def callback(data):
 def start():
     # publishing to "/cmd_vel" to control AGV
     global pub
-    pub = rospy.Publisher('/cmd_vel', Twist)
+    pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)# test diff values for queue_size
     global buttonpub
-    buttonpub = rospy.Publisher('/button_state', ButtonPressed)
+    buttonpub = rospy.Publisher('/button_state', ButtonPressed, queue_size=1) # test diff values for queue_size
+    self.pub_mode = rospy.Publisher('/cmd_mode', UInt16, queue_size=1)
     # subscribed to joystick inputs on topic "joy"
     rospy.Subscriber("joy", Joy, callback)
     # starts the node
     rospy.init_node('Joy2HRP')
+    # Disable Loop
+    mode = UInt16()
+    mode.data = 0x110
+    self.pub_mode.publish(mode
     rospy.spin()
+
 
 if __name__ == '__main__':
     start()
