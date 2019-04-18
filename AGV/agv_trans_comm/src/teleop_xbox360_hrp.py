@@ -3,6 +3,7 @@
 import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
+from std_msgs.msg import UInt16
 from agv_trans_comm.msg import ButtonPressed
 
 # Author: Marcus Lindvarn
@@ -61,7 +62,8 @@ def start():
     pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)# test diff values for queue_size
     global buttonpub
     buttonpub = rospy.Publisher('/button_state', ButtonPressed, queue_size=1) # test diff values for queue_size
-    self.pub_mode = rospy.Publisher('/cmd_mode', UInt16, queue_size=1)
+    global pub_mode
+    pub_mode = rospy.Publisher('/cmd_mode', UInt16, queue_size=1)
     # subscribed to joystick inputs on topic "joy"
     rospy.Subscriber("joy", Joy, callback)
     # starts the node
@@ -69,7 +71,7 @@ def start():
     # Disable Loop
     mode = UInt16()
     mode.data = 0x110
-    self.pub_mode.publish(mode
+    pub_mode.publish(mode)
     rospy.spin()
 
 
