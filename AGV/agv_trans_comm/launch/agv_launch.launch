@@ -1,7 +1,0 @@
-<launch>
-
-    <node pkg="joy" type="joy_node" name="joy_node"/>
-    <node pkg="agv_trans_comm" type="teleop_xbox360_hrp.py" name="teleop_xbox360_hrp"/>
-    <node pkg="agv_trans_comm" type="com_agvoper.py" name="com_agvoper" output="screen"/>
-
-</launch>

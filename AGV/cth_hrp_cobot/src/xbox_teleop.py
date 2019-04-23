@@ -3,7 +3,8 @@
 import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
-from agv_trans_comm.msg import ButtonPressed
+from std_msgs.msg import UInt16
+from cth_hrp_cobot.msg import ButtonPressed
 
 # Author: Marcus Lindvarn
 # This ROS Node converts Joystick inputs from the joy node
@@ -58,14 +59,21 @@ def callback(data):
 def start():
     # publishing to "/cmd_vel" to control AGV
     global pub
-    pub = rospy.Publisher('/cmd_vel', Twist)
+    pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)# test diff values for queue_size
     global buttonpub
-    buttonpub = rospy.Publisher('/button_state', ButtonPressed)
+    buttonpub = rospy.Publisher('/button_state', ButtonPressed, queue_size=1) # test diff values for queue_size
+    global pub_mode
+    pub_mode = rospy.Publisher('/cmd_mode', UInt16, queue_size=1)
     # subscribed to joystick inputs on topic "joy"
     rospy.Subscriber("joy", Joy, callback)
     # starts the node
     rospy.init_node('Joy2HRP')
+    # Disable Loop
+    mode = UInt16()
+    mode.data = 0x110
+    pub_mode.publish(mode)
     rospy.spin()
+
 
 if __name__ == '__main__':
     start()
