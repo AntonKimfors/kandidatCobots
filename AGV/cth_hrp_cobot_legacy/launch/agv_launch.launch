@@ -1,0 +1,7 @@
+<launch>
+
+    <node pkg="joy" type="joy_node" name="joy_node"/>
+    <node pkg="cth_hrp_cobot_legacy" type="teleop_xbox360_hrp.py" name="teleop_xbox360_hrp"/>
+    <node pkg="cth_hrp_cobot_legacy" type="com_agvoper.py" name="com_agvoper" output="screen"/>
+
+</launch>

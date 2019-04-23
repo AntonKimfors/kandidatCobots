@@ -3,9 +3,9 @@
 import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
-from agv_trans_comm.msg import ButtonPressed
-from agv_trans_comm.msg import Command
-from agv_trans_comm.msg import State
+from cth_hrp_cobot_legacy.msg import ButtonPressed
+from cth_hrp_cobot_legacy.msg import Command
+from cth_hrp_cobot_legacy.msg import State
 from os import system
 
 

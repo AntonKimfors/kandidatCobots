@@ -4,7 +4,7 @@ import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
 from std_msgs.msg import UInt16
-from agv_trans_comm.msg import ButtonPressed
+from cth_hrp_cobot.msg import ButtonPressed
 
 # Author: Marcus Lindvarn
 # This ROS Node converts Joystick inputs from the joy node
