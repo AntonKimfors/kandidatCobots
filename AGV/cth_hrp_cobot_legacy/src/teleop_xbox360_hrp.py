@@ -67,7 +67,7 @@ def start():
     # subscribed to joystick inputs on topic "joy"
     rospy.Subscriber("joy", Joy, callback)
     # starts the node
-    rospy.init_node('Joy2HRP')
+    rospy.init_node('Joy2HRP_legacy')
     # Disable Loop
     mode = UInt16()
     mode.data = 0x110

@@ -27,12 +27,12 @@ class agv_comms():
         agv_state.cmd = ""
         agv_state.state = ""
         #self.main()
-        self.ccpub = rospy.Publisher('/AGV_state', State)
+        self.ccpub = rospy.Publisher('/stateA', State, queue_size=1)
         #subscribing to the comandcenter topic as well as the buttionstates from the teleop.
-        rospy.Subscriber("/commandcenter", Command, self.callback_commandcenter)
+        rospy.Subscriber("/cmdA", Command, self.callback_commandcenter)
         rospy.Subscriber("/button_state", ButtonPressed, self.callback_button_state)
         # starts the node
-        rospy.init_node('AGVClassCom')
+        rospy.init_node('AGV_legacy_com')
         rospy.spin()
 
 

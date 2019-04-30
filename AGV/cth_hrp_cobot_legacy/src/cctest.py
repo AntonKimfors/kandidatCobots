@@ -23,9 +23,9 @@ class test_cc():
         cc_state.product_name = ""
 
         
-        self.cc_state_pub = rospy.Publisher('/commandcenter', Command)
+        self.cc_state_pub = rospy.Publisher('/cmdA', Command)
         #subscribing to the commandcenter topic as well as the button_states from the teleop.
-        rospy.Subscriber("/AGV_state", State, self.callback_agvtest)
+        rospy.Subscriber("/stateA", State, self.callback_agvtest)
         rospy.Subscriber("/button_state", ButtonPressed, self.callback_button_state)
         # starts the node
         rospy.init_node('testcc_node')
