@@ -13,11 +13,69 @@ from os import system
 
 
 
-class agv_comms():
+class agv_comms():   
     def __init__ (self):
+
+        self.TEXT_INITIALIZE = """
+        _____      _ _   _       _ _         
+       |_   _|    (_) | (_)     | (_)        
+         | | _ __  _| |_ _  __ _| |_ _______ 
+         | || '_ \| | __| |/ _` | | |_  / _ \ 
+        _| || | | | | |_| | (_| | | |/ /  __/
+        \___/_| |_|_|\__|_|\__,_|_|_/___\___|
+                                            
+
+
+
+        """
+
+        self.TEXT_FINISHED = """
+        ______ _       _     _              _ 
+        |  ___(_)     (_)   | |            | |
+        | |_   _ _ __  _ ___| |__   ___  __| |
+        |  _| | | '_ \| / __| '_ \ / _ \/ _` |
+        | |   | | | | | \__ \ | | |  __/ (_| |
+        \_|   |_|_| |_|_|___/_| |_|\___|\__,_|
+                                                                       
+
+
+
+        """
+
+        self.TEXT_EXECUTING = """
+         _____                    _   _             
+        |  ___|                  | | (_)            
+        | |____  _____  ___ _   _| |_ _ _ __   __ _ 
+        |  __\ \/ / _ \/ __| | | | __| | '_ \ / _` |
+        | |___>  <  __/ (__| |_| | |_| | | | | (_| |
+        \____/_/\_\___|\___|\__,_|\__|_|_| |_|\__, |
+                                               __/ |
+                                              |___/ 
+                                                
+                                            
+        """
+        self.TEXT_MISSION = """
+        ___  ____         _             _ 
+        |  \/  (_)       (_)           | |
+        | .  . |_ ___ ___ _  ___  _ __ | |
+        | |\/| | / __/ __| |/ _ \| '_ \| |
+        | |  | | \__ \__ \ | (_) | | | |_|
+        \_|  |_/_|___/___/_|\___/|_| |_(_)
+                                  
+                                  
+                                                
+                                            
+        """
+        # Constants
+        self.FINISHED = "finished"
+        self.EXECUTING = "executing"
+        self.INIT = "init"
+
+
+
         # Initial values
-        self.battAVolt = 0.0
-        self.battBVolt = 0.0
+        self.battAVolt = 00.0
+        self.battBVolt = 00.0
 
         # Base States:
         self.agv_state = State()
@@ -25,7 +83,7 @@ class agv_comms():
         self.last_run_recieved = False
         self.last_product_recieved = ""
         self.current_cmd = ""
-        self.current_state = "init"
+        self.current_state = self.INIT
         self.last_command_recieved = ""
         self.last_product_recieved = ""
         self.last_run_recieved = False
@@ -33,19 +91,22 @@ class agv_comms():
         self.agv_state.message = ""
         self.agv_state.cmd = ""
         self.agv_state.state = ""
+        self.bat_state = "UNKNOWN!"
+        
 
         #sensor states:
         self.mowerInternalState = 0
 
 
-        self.ccpub = rospy.Publisher('/stateA', State)
-        #subscribing to the comandcenter topic as well as the buttionstates from the teleop.
+        self.ccpub = rospy.Publisher('/stateA', State, queue_size=1)
+        #subscribing to the cmdA, button_state, sensor_status and cattery_status topics
         rospy.Subscriber("/cmdA", Command, self.callback_commandcenter)
         rospy.Subscriber("/button_state", ButtonPressed, self.callback_button_state)
         rospy.Subscriber('/sensor_status',SensorStatus,self.callback_sensor_status)
         rospy.Subscriber('/battery_status',BatteryStatus,self.callback_battery_status)
         # starts the node
         rospy.init_node('com_oper_node')
+        self.refresh_view()
         rospy.spin()
     def mowerStateToString(self, x):
         return {
@@ -85,8 +146,8 @@ class agv_comms():
             self.refresh_view()
             self.ccpub.publish(self.agv_state)
         # if Run is set to False and Current status is finished, set status to init
-        if (self.last_run_recieved == False and self.current_state == "finished"):
-            self.current_state = "init"
+        if (self.last_run_recieved == False and self.current_state == self.FINISHED):
+            self.current_state = self.INIT
             self.agv_state.state = self.current_state
             self.refresh_view()
             self.ccpub.publish(self.agv_state)  
@@ -96,9 +157,9 @@ class agv_comms():
     def callback_button_state(self, data):
         # if current status is init and x is pressed, set status to executing and pub
         # should a check that a command has been given, meaning either button to accept or auto accept mission
-        if (self.current_state == "init" and self.current_cmd != ""):  # more requirements needed 
+        if (self.current_state == self.INIT and self.current_cmd != ""):  # more requirements needed 
             if (data.xpress == True):
-                self.current_state = "executing"
+                self.current_state = self.EXECUTING
                 self.current_cmd = self.last_command_recieved
                 self.last_sent_cmd = self.current_state
                 self.agv_state.state = self.current_state
@@ -109,26 +170,57 @@ class agv_comms():
 
 
         # if current status is Exec and B is pressed, set status to finished and pub
-        if (self.current_state == "executing"):
+        if (self.current_state == self.EXECUTING):
             if (data.bpress == True):
-                self.current_state = "finished"
+                self.current_state = self.FINISHED
                 self.last_sent_cmd = self.current_state
                 self.agv_state.state = self.current_state
-                self.current_cmd = ""
+                self.current_cmd = ""   
                 self.agv_state.cmd = self.current_cmd
                 self.ccpub.publish(self.agv_state) 
                 self.refresh_view()
 
     def refresh_view(self):
         system('clear')
-        print('Last sent command:' + self.last_sent_cmd)
-        print('Current command: ' + self.current_cmd )
-        print('Current State: ' + self.current_state)
-        msg = 'batA %.1f V  batB %.1f V' % (self.battAVolt,self.battBVolt)
+        if (self.current_state == self.INIT and self.current_cmd != ""):
+            print(self.TEXT_MISSION)
+        elif (self.current_state == self.FINISHED):
+            print(self.TEXT_FINISHED)
+        elif(self.current_state == self.EXECUTING):
+            print(self.TEXT_EXECUTING)
+        elif(self.current_state == self.INIT):
+            print(self.TEXT_INITIALIZE)
+        else: 
+            print('error')
+        
+        line1 = 'Last sent command: %s           Current State: %s' % (self.betterPrinting(self.last_sent_cmd, 9), self.current_state)
+        print(line1)
+        self.getBatState()
+        msg = 'batA %.1f V  batB %.1f V               Battery State: %s' % (self.battAVolt, self.battBVolt, self.bat_state)
         print(msg)
         mowerState = self.mowerStateToString(self.mowerInternalState)
-        print('Mower State: ' + mowerState)
-      
+
+        print('\nCurrent command: %s       Mower State: %s' % (self.betterPrinting (self.current_cmd,15 ), mowerState))
+        
+
+
+    def betterPrinting(self,fix,dlen):
+        newfix = fix
+        fix_len = len(newfix)
+        while (fix_len < dlen) :
+            newfix = newfix + " "
+            fix_len = len(newfix)
+        return newfix    
+    
+    
+    def getBatState(self):
+        if (self.battAVolt < 17.0 or self.battBVolt < 17.0):
+            self.bat_state = "WARNING!"
+        else:
+            self.bat_state = "OK!"
+
+
+    
 
 if __name__ == '__main__':
     try:
