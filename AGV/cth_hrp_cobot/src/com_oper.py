@@ -38,9 +38,9 @@ class agv_comms():
         self.mowerInternalState = 0
 
 
-        self.ccpub = rospy.Publisher('/AGV_state', State)
+        self.ccpub = rospy.Publisher('/stateA', State)
         #subscribing to the comandcenter topic as well as the buttionstates from the teleop.
-        rospy.Subscriber("/commandcenter", Command, self.callback_commandcenter)
+        rospy.Subscriber("/cmdA", Command, self.callback_commandcenter)
         rospy.Subscriber("/button_state", ButtonPressed, self.callback_button_state)
         rospy.Subscriber('/sensor_status',SensorStatus,self.callback_sensor_status)
         rospy.Subscriber('/battery_status',BatteryStatus,self.callback_battery_status)
