@@ -4,6 +4,10 @@
 #   assembly.
 #   Also contains errorhandling for incorrect inputs
 #   -------------------------------------------------------------------------------
+#   Author: Sebastian Brink
+#   Kandidatarbete COBOTS
+#   V.1.0.0
+#   -------------------------------------------------------------------------------
 
 import random
 

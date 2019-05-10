@@ -85,7 +85,7 @@ def main(args=None):
             time.sleep(SLEEP_TIME)
 
             # If station is not empty
-            if cmd_msgs[station].product_name != '':
+            if cmd_msgs[station].product_name:
 
                 print("Checking if station {} is done".format(str(station)))
                 time.sleep(SLEEP_TIME)
@@ -189,11 +189,25 @@ def is_all_stations_empty():
 # not recognized
 def check_state(station: int):
     state = state_msgs[station].state.lower()
-    if state == INIT or state == EXECUTING or state == FINISHED:
+    if state_status(state):
         return state
     else:
         raise Exception("Unknown state on station {}: {}".format(
                         str(station), state))
+
+
+def state_status(state):
+    ''' Check station states against the preapproved states:
+        (init, executing, finished) \n
+    State: Station state \n
+    Returns: (bool) True or false depending on if the input state is found
+             in approvedStatus
+    '''
+    acceptedStatus = [INIT, EXECUTING, FINISHED, '']  # '' to enable empty msgs
+    if state in acceptedStatus:
+        return True
+    else:
+        return False
 
 
 # Sets a station to init with handshake
