@@ -189,11 +189,10 @@ def is_all_stations_empty():
 # not recognized
 def check_state(station: int):
     state = state_msgs[station].state.lower()
-    if state_status(state):
-        return state
-    else:
-        raise Exception("Unknown state on station {}: {}".format(
-                        str(station), state))
+    if not state_status(state):
+        print("Unknown state on station {}: {}".format(str(station), state))
+
+    return state
 
 
 def state_status(state):
