@@ -3,7 +3,7 @@
 import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
-from cth_hrp_cobot.msg import ButtonPressed
+from cth_hrp_cobot.msg import ButtonMsg
 from cth_hrp_cobot.msg import Command
 from cth_hrp_cobot.msg import State
 from std_msgs.msg import UInt16
@@ -15,100 +15,19 @@ from os import system
 
 class agv_comms():   
     def __init__ (self):
-
-        self.TEXT_INITIALIZE = """
-        _____      _ _   _       _ _         
-       |_   _|    (_) | (_)     | (_)        
-         | | _ __  _| |_ _  __ _| |_ _______ 
-         | || '_ \| | __| |/ _` | | |_  / _ \ 
-        _| || | | | | |_| | (_| | | |/ /  __/
-        \___/_| |_|_|\__|_|\__,_|_|_/___\___|
-                                            
-
-
-
-        """
-
-        self.TEXT_FINISHED = """
-        ______ _       _     _              _ 
-        |  ___(_)     (_)   | |            | |
-        | |_   _ _ __  _ ___| |__   ___  __| |
-        |  _| | | '_ \| / __| '_ \ / _ \/ _` |
-        | |   | | | | | \__ \ | | |  __/ (_| |
-        \_|   |_|_| |_|_|___/_| |_|\___|\__,_|
-                                                                       
-
-
-
-        """
-
-        self.TEXT_EXECUTING = """
-         _____                    _   _             
-        |  ___|                  | | (_)            
-        | |____  _____  ___ _   _| |_ _ _ __   __ _ 
-        |  __\ \/ / _ \/ __| | | | __| | '_ \ / _` |
-        | |___>  <  __/ (__| |_| | |_| | | | | (_| |
-        \____/_/\_\___|\___|\__,_|\__|_|_| |_|\__, |
-                                               __/ |
-                                              |___/ 
-                                                
-                                            
-        """
-        self.TEXT_MISSION = """
-        ___  ____         _             _ 
-        |  \/  (_)       (_)           | |
-        | .  . |_ ___ ___ _  ___  _ __ | |
-        | |\/| | / __/ __| |/ _ \| '_ \| |
-        | |  | | \__ \__ \ | (_) | | | |_|
-        \_|  |_/_|___/___/_|\___/|_| |_(_)
-                                  
-                                  
-                                                
-                                            
-        """
-        # Constants
-        self.FINISHED = "finished"
-        self.EXECUTING = "executing"
-        self.INIT = "init"
-
-
-
-        # Initial values
-        self.battAVolt = 00.0
-        self.battBVolt = 00.0
-
-        # Base States:
-        self.agv_state = State()
-        self.last_command_recieved = ""
-        self.last_run_recieved = False
-        self.last_product_recieved = ""
-        self.current_cmd = ""
-        self.current_state = self.INIT
-        self.last_command_recieved = ""
-        self.last_product_recieved = ""
-        self.last_run_recieved = False
-        self.last_sent_cmd = ""
-        self.agv_state.message = ""
-        self.agv_state.cmd = ""
-        self.agv_state.state = ""
-        self.bat_state = "UNKNOWN!"
-        
-
-        #sensor states:
-        self.mowerInternalState = 0
-
-
+        self.setVariables()
         self.ccpub = rospy.Publisher('/stateA', State, queue_size=1)
         self.pub_mode = rospy.Publisher('/cmd_mode', UInt16, queue_size=1)
         #subscribing to the cmdA, button_state, sensor_status and cattery_status topics
         rospy.Subscriber("/cmdA", Command, self.callback_commandcenter)
-        rospy.Subscriber("/button_state", ButtonPressed, self.callback_button_state)
+        rospy.Subscriber("/button_state", ButtonMsg, self.callback_button_state)
         rospy.Subscriber('/sensor_status',SensorStatus,self.callback_sensor_status)
         rospy.Subscriber('/battery_status',BatteryStatus,self.callback_battery_status)
         # starts the node
         rospy.init_node('com_oper_node')
         self.refresh_view()
         rospy.spin()
+    
     def mowerStateToString(self, x):
         return {
             0:'OFF',
@@ -191,6 +110,16 @@ class agv_comms():
         if data.ypress == True:
             self.ccpub.publish(self.agv_state)
 
+        #Locked Driving
+        if data.lbpress == True:
+            self.lockedState == True
+
+        #Unlocked Driving
+        if data.rbpress == True:
+            self.lockedState == False
+        
+
+
     def refresh_view(self):
         system('clear')
         if (self.current_state == self.INIT and self.current_cmd != ""):
@@ -204,16 +133,40 @@ class agv_comms():
         else: 
             print('error')
         
-        line1 = 'Last sent command: %s           Current State: %s' % (self.betterPrinting(self.last_sent_cmd, 9), self.current_state)
+        line1 = 'Last sent command: %s            Current State: %s' % (self.betterPrinting(self.last_sent_cmd, 9), self.current_state)
         print(line1)
-        self.getBatState()
-        msg = 'batA %.1f V                            Battery State: %s' % (self.battAVolt, self.bat_state)
+        self.getCurrentStates()
+        msg = 'BatA %.1f V                             Battery State: %s' % (self.battAVolt, self.bat_state)
         print(msg)
         mowerState = self.mowerStateToString(self.mowerInternalState)
 
-        print('\nCurrent command: %s       Mower State: %s' % (self.betterPrinting (self.current_cmd,15 ), mowerState))
+        print('\nCurrent Command: %s        Mower State: %s' % (self.betterPrinting (self.current_cmd,15 ), mowerState))
+        self.printSteering()
         
 
+    def printSteering(self):
+        print('\nUse Left Joystick to Move               Driving: %s \n' % (self.drivingState))
+        print('                          Y - Resend Last command')
+        print('   State = Executing - X     B - State = Finished')
+        print('                          A - Remove Loop Detection')
+        print('\nLB / RB - Lock/Unlock Driving')
+        
+        
+    def getCurrentStates(self)
+        self.getDriveState()
+        self.getBatState()
+        
+    def getDriveState(self):
+        if self.lockedState == True:
+            self.drivingState = "Locked"
+        else:
+            self.drivingState =  "Unlocked"
+    
+    def getBatState(self):
+        if (self.battAVolt < 17.0):
+            self.bat_state = "WARNING!"
+        else:
+            self.bat_state = "OK!"
 
     def betterPrinting(self,fix,dlen):
         newfix = fix
@@ -222,16 +175,89 @@ class agv_comms():
             newfix = newfix + " "
             fix_len = len(newfix)
         return newfix    
-    
-    
-    def getBatState(self):
-        if (self.battAVolt < 17.0):
-            self.bat_state = "WARNING!"
-        else:
-            self.bat_state = "OK!"
+
+    def setVariables(self):
+        self.TEXT_INITIALIZE = """
+        _____      _ _   _       _ _         
+       |_   _|    (_) | (_)     | (_)        
+         | | _ __  _| |_ _  __ _| |_ _______ 
+         | || '_ \| | __| |/ _` | | |_  / _ \ 
+        _| || | | | | |_| | (_| | | |/ /  __/
+        \___/_| |_|_|\__|_|\__,_|_|_/___\___|
+                                            
 
 
-    
+
+        """
+
+        self.TEXT_FINISHED = """
+        ______ _       _     _              _ 
+        |  ___(_)     (_)   | |            | |
+        | |_   _ _ __  _ ___| |__   ___  __| |
+        |  _| | | '_ \| / __| '_ \ / _ \/ _` |
+        | |   | | | | | \__ \ | | |  __/ (_| |
+        \_|   |_|_| |_|_|___/_| |_|\___|\__,_|
+                                                                       
+
+
+
+        """
+
+        self.TEXT_EXECUTING = """
+         _____                    _   _             
+        |  ___|                  | | (_)            
+        | |____  _____  ___ _   _| |_ _ _ __   __ _ 
+        |  __\ \/ / _ \/ __| | | | __| | '_ \ / _` |
+        | |___>  <  __/ (__| |_| | |_| | | | | (_| |
+        \____/_/\_\___|\___|\__,_|\__|_|_| |_|\__, |
+                                               __/ |
+                                              |___/ 
+                                                
+                                            
+        """
+        self.TEXT_MISSION = """
+        ___  ____         _             _ 
+        |  \/  (_)       (_)           | |
+        | .  . |_ ___ ___ _  ___  _ __ | |
+        | |\/| | / __/ __| |/ _ \| '_ \| |
+        | |  | | \__ \__ \ | (_) | | | |_|
+        \_|  |_/_|___/___/_|\___/|_| |_(_)
+                                  
+                                  
+                                                
+                                            
+        """
+        # Constants
+        self.FINISHED = "finished"
+        self.EXECUTING = "executing"
+        self.INIT = "init"
+
+
+
+        # Initial values
+        self.battAVolt = 00.0
+        self.battBVolt = 00.0
+
+        # Base States:
+        self.agv_state = State()
+        self.last_command_recieved = ""
+        self.last_run_recieved = False
+        self.last_product_recieved = ""
+        self.current_cmd = ""
+        self.current_state = self.INIT
+        self.last_command_recieved = ""
+        self.last_product_recieved = ""
+        self.last_run_recieved = False
+        self.last_sent_cmd = ""
+        self.agv_state.message = ""
+        self.agv_state.cmd = ""
+        self.agv_state.state = ""
+        self.bat_state = "UNKNOWN!"
+        self.lockedState = True
+        
+
+        #sensor states:
+        self.mowerInternalState = 0    
 
 if __name__ == '__main__':
     try:
