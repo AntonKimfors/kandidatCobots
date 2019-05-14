@@ -185,7 +185,7 @@ def is_all_stations_empty():
     return True
 
 
-# Checks and returns the state of the station. Throws exception if state is
+# Checks and returns the state of the station. Prints message if state is
 # not recognized
 def check_state(station: int):
     state = state_msgs[station].state.lower()
