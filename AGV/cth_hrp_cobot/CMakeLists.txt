@@ -48,6 +48,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   ButtonPressed.msg
+  ButtonMsg.msg
   State.msg
   Command.msg
 )

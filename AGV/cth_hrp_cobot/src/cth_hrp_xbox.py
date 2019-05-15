@@ -3,9 +3,11 @@
 import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
-from cth_hrp_cobot.msg import ButtonMsg
+#from cth_hrp_cobot.msg import ButtonMsg
 from cth_hrp_cobot.msg import Command
 from cth_hrp_cobot.msg import State
+from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Joy
 from std_msgs.msg import UInt16
 from am_driver.msg import SensorStatus
 from am_driver.msg import BatteryStatus
@@ -16,18 +18,59 @@ from os import system
 class agv_comms():   
     def __init__ (self):
         self.setVariables()
+        
+        # Publishers
+        self.pub_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=1)# test diff values for queue_size
         self.ccpub = rospy.Publisher('/stateA', State, queue_size=1)
         self.pub_mode = rospy.Publisher('/cmd_mode', UInt16, queue_size=1)
         #subscribing to the cmdA, button_state, sensor_status and cattery_status topics
         rospy.Subscriber("/cmdA", Command, self.callback_commandcenter)
-        rospy.Subscriber("/button_state", ButtonMsg, self.callback_button_state)
         rospy.Subscriber('/sensor_status',SensorStatus,self.callback_sensor_status)
         rospy.Subscriber('/battery_status',BatteryStatus,self.callback_battery_status)
+        rospy.Subscriber("joy", Joy, self.callback_joy)
         # starts the node
-        rospy.init_node('com_oper_node')
+        rospy.init_node('cth_hrp_xbox')
         self.refresh_view()
         rospy.spin()
     
+    def callback_joy(self,data):
+        # vertical left stick axis = linear rate
+        self.twist.linear.x = self.linConst*data.axes[1]
+        # horizontal left stick axis = turn rate
+        self.twist.angular.z = self.angConst*data.axes[0]
+        # A Pressed
+        if (data.buttons[0]== 1):
+            self.aPressed()
+            self.refresh_view()
+        # B Pressed
+        if (data.buttons[1]== 1):
+            self.bPressed()
+            self.refresh_view()
+        # X Pressed
+        if (data.buttons[2]== 1):
+            self.xPressed()
+            self.refresh_view()
+        # Y Pressed
+        if (data.buttons[3]== 1):
+            self.yPressed()
+            self.refresh_view()
+        # RB Pressed - Unlock Movement
+        if (data.buttons[4]== 1):
+            self.rbPressed()
+            self.refresh_view()
+        # LB Pressed - Lock Movement
+        if (data.buttons[5]== 1):
+            self.lbPressed()
+            self.refresh_view()
+        # BACK and START Pressed
+        if (data.buttons[6] == 1 and data.buttons[7]== 1):
+            self.startAndBackPressed()
+            
+    
+        self.pub_vel.publish(self.twist)
+
+
+
     def mowerStateToString(self, x):
         return {
             0:'OFF',
@@ -74,57 +117,78 @@ class agv_comms():
         #always answer a publish with a publish with current state. might need to change
         # self.ccpub.publish(agv_state)
 
-    def callback_button_state(self, data):
+    def aPressed(self):
+        # IF A pressed - Disable Loop detection
+
+        mode = UInt16()
+        mode.data = 0x111
+        self.pub_mode.publish(mode)
+    
+    def bPressed(self):
+        # if current status is Exec and B is pressed, set status to finished and pub
+        if (self.current_state == self.EXECUTING):
+            self.current_state = self.FINISHED
+            self.last_sent_cmd = self.current_state
+            self.agv_state.state = self.current_state
+            self.current_cmd = ""   
+            self.agv_state.cmd = self.current_cmd
+            self.ccpub.publish(self.agv_state) 
+
+
+    def xPressed(self):
         # if current status is init and x is pressed, set status to executing and pub
         # should a check that a command has been given, meaning either button to accept or auto accept mission
         if (self.current_state == self.INIT and self.current_cmd != ""):  # more requirements needed 
-            if (data.xpress == True):
-                self.current_state = self.EXECUTING
-                self.current_cmd = self.last_command_recieved
-                self.last_sent_cmd = self.current_state
-                self.agv_state.state = self.current_state
-                self.agv_state.cmd = self.current_cmd
-                self.ccpub.publish(self.agv_state)
-            #Add accept button ? 
-
-
-        # if current status is Exec and B is pressed, set status to finished and pub
-        if (self.current_state == self.EXECUTING):
-            if (data.bpress == True):
-                self.current_state = self.FINISHED
-                self.last_sent_cmd = self.current_state
-                self.agv_state.state = self.current_state
-                self.current_cmd = ""   
-                self.agv_state.cmd = self.current_cmd
-                self.ccpub.publish(self.agv_state) 
-
-        if data.startpress == True and data.backpress == True:
-            print('Quitting')
-            rospy.signal_shutdown('Shutdown')
-
-
-        # IF A pressed - Disable Loop 
-        if (data.apress == True):  
-            mode = UInt16()
-            mode.data = 0x111
-            self.pub_mode.publish(mode)
-        # Resend State
-        if data.ypress == True:
+            self.current_state = self.EXECUTING
+            self.current_cmd = self.last_command_recieved
             self.last_sent_cmd = self.current_state
+            self.agv_state.state = self.current_state
+            self.agv_state.cmd = self.current_cmd
             self.ccpub.publish(self.agv_state)
+    
+    
+    # Y - Resend State
+    def yPressed(self):
+        self.last_sent_cmd = self.current_state
+        self.ccpub.publish(self.agv_state)
+   
+    #Start and Back Pressed - Shutdown
+    def startAndBackPressed(self):
+        print('Quitting')
+        # Stop the robot
+        twist = Twist()
+        self.pub_vel.publish(twist)
 
+        # Stop following loop!
+        mode = UInt16()
+        mode.data = 0x17 
+        self.pub_mode.publish(mode)
+        rospy.signal_shutdown('Shutdown')
+ 
+    def lbPressed(self):
         #Locked Driving
-        if data.lbpress == True:
-            self.lockedState = True
-
+        self.lockedState = True
+        self.linConst = 0.0
+        self.angConst = 0.0
+        
+    def rbPressed(self):    
         #Unlocked Driving
-        if data.rbpress == True:
-            self.lockedState = False
-        self.refresh_view()
-
-
+        self.lockedState = False
+        self.linConst = 0.4
+        self.angConst = 0.7
+        
     def refresh_view(self):
         system('clear')
+        self.printLargeState()        
+        #line1 = 'Last sent command: %s            Current State: %s' % (self.betterPrinting(self.last_sent_cmd, 9), self.current_state)
+        #msg = 'BatA %.1f V                             Battery State: %s' % (self.battAVolt, self.bat_state)
+        self.getCurrentStates()
+        print('Last sent command: %s            Current State: %s' % (self.betterPrinting(self.last_sent_cmd, 9), self.current_state))
+        print('BatA %.1f V                             Battery State: %s' % (self.battAVolt, self.bat_state))
+        print('\nCurrent Command: %s        Mower State: %s' % (self.betterPrinting (self.current_cmd,15 ), self.mowerState))
+        self.printSteering()
+        
+    def printLargeState(self):
         if (self.current_state == self.INIT and self.current_cmd != ""):
             print(self.TEXT_MISSION)
         elif (self.current_state == self.FINISHED):
@@ -135,17 +199,7 @@ class agv_comms():
             print(self.TEXT_INITIALIZE)
         else: 
             print('error')
-        
-        line1 = 'Last sent command: %s            Current State: %s' % (self.betterPrinting(self.last_sent_cmd, 9), self.current_state)
-        print(line1)
-        self.getCurrentStates()
-        msg = 'BatA %.1f V                             Battery State: %s' % (self.battAVolt, self.bat_state)
-        print(msg)
-        mowerState = self.mowerStateToString(self.mowerInternalState)
 
-        print('\nCurrent Command: %s        Mower State: %s' % (self.betterPrinting (self.current_cmd,15 ), mowerState))
-        self.printSteering()
-        
 
     def printSteering(self):
         print('\n--------------------------- CONTROLS ---------------------------')
@@ -154,11 +208,15 @@ class agv_comms():
         print('       State = Executing - X     B - State = Finished')
         print('                              A - Remove Loop Detection')
         print('\nLB / RB - Lock/Unlock Driving')
-        
+        print('Start + Back - Shutdown')
         
     def getCurrentStates(self):
         self.getDriveState()
         self.getBatState()
+        self.getMowerState()
+
+    def getMowerState(self):
+        self.mowerState = self.mowerStateToString(self.mowerInternalState)
         
     def getDriveState(self):
         if self.lockedState == True:
@@ -251,10 +309,17 @@ class agv_comms():
         self.bat_state = "UNKNOWN!"
         self.lockedState = True
         
+        #Twist Message
+        self.twist = Twist()
+        
+        # Velocities
+        self.linConst = 0.0
+        self.angConst = 0.0
 
         #sensor states:
         self.mowerInternalState = 0    
-
+        # Mowerstate
+        self.mowerState = self.mowerStateToString(self.mowerInternalState)
 if __name__ == '__main__':
     try:
         agv_comms()
