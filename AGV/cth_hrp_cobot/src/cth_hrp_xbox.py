@@ -38,29 +38,29 @@ class agv_comms():
         self.twist.linear.x = self.linConst*data.axes[1]
         # horizontal left stick axis = turn rate
         self.twist.angular.z = self.angConst*data.axes[0]
-        # A Pressed
+        # A Pressed - Remove Loop Detection
         if (data.buttons[0]== 1):
             self.aPressed()
             self.refresh_view()
-        # B Pressed
+        # B Pressed - Set finished
         if (data.buttons[1]== 1):
             self.bPressed()
             self.refresh_view()
-        # X Pressed
+        # X Pressed - Set Executing
         if (data.buttons[2]== 1):
             self.xPressed()
             self.refresh_view()
-        # Y Pressed
+        # Y Pressed - resend
         if (data.buttons[3]== 1):
             self.yPressed()
             self.refresh_view()
-        # RB Pressed - Unlock Movement
+        # RB Pressed - Lock Movement
         if (data.buttons[4]== 1):
-            self.rbPressed()
-            self.refresh_view()
-        # LB Pressed - Lock Movement
-        if (data.buttons[5]== 1):
             self.lbPressed()
+            self.refresh_view()
+        # LB Pressed - Unock Movement
+        if (data.buttons[5]== 1):
+            self.rbPressed()
             self.refresh_view()
         # BACK and START Pressed
         if (data.buttons[6] == 1 and data.buttons[7]== 1):
@@ -290,7 +290,6 @@ class agv_comms():
 
         # Initial values
         self.battAVolt = 00.0
-        self.battBVolt = 00.0
 
         # Base States:
         self.agv_state = State()
