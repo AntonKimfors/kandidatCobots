@@ -30,6 +30,8 @@ class agv_comms():
         rospy.Subscriber("joy", Joy, self.callback_joy)
         # starts the node
         rospy.init_node('cth_hrp_xbox')
+
+
         self.refresh_view()
         rospy.spin()
     
@@ -38,29 +40,29 @@ class agv_comms():
         self.twist.linear.x = self.linConst*data.axes[1]
         # horizontal left stick axis = turn rate
         self.twist.angular.z = self.angConst*data.axes[0]
-        # A Pressed
+        # A Pressed - Remove Loop Detection
         if (data.buttons[0]== 1):
             self.aPressed()
             self.refresh_view()
-        # B Pressed
+        # B Pressed - Set finished
         if (data.buttons[1]== 1):
             self.bPressed()
             self.refresh_view()
-        # X Pressed
+        # X Pressed - Set Executing
         if (data.buttons[2]== 1):
             self.xPressed()
             self.refresh_view()
-        # Y Pressed
+        # Y Pressed - resend
         if (data.buttons[3]== 1):
             self.yPressed()
             self.refresh_view()
-        # RB Pressed - Unlock Movement
+        # RB Pressed - Lock Movement
         if (data.buttons[4]== 1):
-            self.rbPressed()
-            self.refresh_view()
-        # LB Pressed - Lock Movement
-        if (data.buttons[5]== 1):
             self.lbPressed()
+            self.refresh_view()
+        # LB Pressed - Unock Movement
+        if (data.buttons[5]== 1):
+            self.rbPressed()
             self.refresh_view()
         # BACK and START Pressed
         if (data.buttons[6] == 1 and data.buttons[7]== 1):
@@ -84,22 +86,36 @@ class agv_comms():
             8:'ERROR'
         }.get(x,'UNKNONW_VALUE')
 
-
-
     def callback_sensor_status(self,data):
+    
+        lastLoopState = self.loopState
+        self.sensorStatus = data.sensorStatus
+        if self.sensorStatus & 0x0400:
+            self.loopState = 'On'
+        else:
+            self.loopState = 'Off'
+        if lastLoopState != self.loopState:
+            self.refresh_view()
+
+    
         if (self.mowerInternalState != data.mowerInternalState):
             self.mowerInternalState = data.mowerInternalState
+            self.refresh_view()
+
+        #if in state PENDING_START, try to remove loop detection - needs testing not sure of flow.
+        if (self.mowerInternalState == 4 and self.loopState != 'Off'):
+            self.removeLoopDetect()
             self.refresh_view()
         
     def callback_battery_status(self,data):
         self.battAVolt = data.batteryAVoltage/1000.0
-        self.battBVolt = data.batteryBVoltage/1000.0
         self.refresh_view()
 
 
     def callback_commandcenter(self, data):
         # update current and lastrecieved product to the recieved data - might skip
         self.last_run_recieved = data.run
+    
         
         #if a new command is recieved, update current command and refresh the view
         if (self.last_command_recieved != data.command):
@@ -119,11 +135,9 @@ class agv_comms():
 
     def aPressed(self):
         # IF A pressed - Disable Loop detection
+        self.removeLoopDetection()
 
-        mode = UInt16()
-        mode.data = 0x111
-        self.pub_mode.publish(mode)
-    
+
     def bPressed(self):
         # if current status is Exec and B is pressed, set status to finished and pub
         if (self.current_state == self.EXECUTING):
@@ -172,11 +186,19 @@ class agv_comms():
         self.angConst = 0.0
         
     def rbPressed(self):    
-        #Unlocked Driving
+        #Unlcked Driving
         self.lockedState = False
         self.linConst = 0.4
         self.angConst = 0.7
         
+    def removeLoopDetection(self):
+        #Removes Loop Detection
+        print('removing loop')
+        mode = UInt16()
+        mode.data = 0x111
+        self.pub_mode.publish(mode)
+    
+
     def refresh_view(self):
         system('clear')
         self.printLargeState()        
@@ -185,7 +207,8 @@ class agv_comms():
         self.getCurrentStates()
         print('Last sent command: %s            Current State: %s' % (self.betterPrinting(self.last_sent_cmd, 9), self.current_state))
         print('BatA %.1f V                             Battery State: %s' % (self.battAVolt, self.bat_state))
-        print('\nCurrent Command: %s        Mower State: %s' % (self.betterPrinting (self.current_cmd,15 ), self.mowerState))
+        print('Loop Detection: %s                 ' % (self.betterPrinting(self.loopState,3)))
+        print('Current Command: %s        Mower State: %s' % (self.betterPrinting (self.current_cmd,15 ), self.mowerState))
         self.printSteering()
         
     def printLargeState(self):
@@ -290,7 +313,6 @@ class agv_comms():
 
         # Initial values
         self.battAVolt = 00.0
-        self.battBVolt = 00.0
 
         # Base States:
         self.agv_state = State()
@@ -308,6 +330,7 @@ class agv_comms():
         self.agv_state.state = ""
         self.bat_state = "UNKNOWN!"
         self.lockedState = True
+        self.loopState = 'On'
         
         #Twist Message
         self.twist = Twist()
