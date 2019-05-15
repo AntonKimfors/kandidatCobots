@@ -85,7 +85,6 @@ class agv_comms():
                 self.agv_state.state = self.current_state
                 self.agv_state.cmd = self.current_cmd
                 self.ccpub.publish(self.agv_state)
-                self.refresh_view()
             #Add accept button ? 
 
 
@@ -98,7 +97,10 @@ class agv_comms():
                 self.current_cmd = ""   
                 self.agv_state.cmd = self.current_cmd
                 self.ccpub.publish(self.agv_state) 
-                self.refresh_view()
+
+        if data.startpress == True and data.backpress == True:
+            print('Quitting')
+            rospy.signal_shutdown('Shutdown')
 
 
         # IF A pressed - Disable Loop 
@@ -106,18 +108,19 @@ class agv_comms():
             mode = UInt16()
             mode.data = 0x111
             self.pub_mode.publish(mode)
-
+        # Resend State
         if data.ypress == True:
+            self.last_sent_cmd = self.current_state
             self.ccpub.publish(self.agv_state)
 
         #Locked Driving
         if data.lbpress == True:
-            self.lockedState == True
+            self.lockedState = True
 
         #Unlocked Driving
         if data.rbpress == True:
-            self.lockedState == False
-        
+            self.lockedState = False
+        self.refresh_view()
 
 
     def refresh_view(self):
@@ -145,14 +148,15 @@ class agv_comms():
         
 
     def printSteering(self):
-        print('\nUse Left Joystick to Move               Driving: %s \n' % (self.drivingState))
-        print('                          Y - Resend Last command')
-        print('   State = Executing - X     B - State = Finished')
-        print('                          A - Remove Loop Detection')
+        print('\n--------------------------- CONTROLS ---------------------------')
+        print('Use Left Joystick to Move               Driving: %s \n' % (self.drivingState))
+        print('                              Y - Resend Last command')
+        print('       State = Executing - X     B - State = Finished')
+        print('                              A - Remove Loop Detection')
         print('\nLB / RB - Lock/Unlock Driving')
         
         
-    def getCurrentStates(self)
+    def getCurrentStates(self):
         self.getDriveState()
         self.getBatState()
         
@@ -186,8 +190,6 @@ class agv_comms():
         \___/_| |_|_|\__|_|\__,_|_|_/___\___|
                                             
 
-
-
         """
 
         self.TEXT_FINISHED = """
@@ -199,8 +201,6 @@ class agv_comms():
         \_|   |_|_| |_|_|___/_| |_|\___|\__,_|
                                                                        
 
-
-
         """
 
         self.TEXT_EXECUTING = """
@@ -211,9 +211,7 @@ class agv_comms():
         | |___>  <  __/ (__| |_| | |_| | | | | (_| |
         \____/_/\_\___|\___|\__,_|\__|_|_| |_|\__, |
                                                __/ |
-                                              |___/ 
-                                                
-                                            
+                                              |___/                                                 
         """
         self.TEXT_MISSION = """
         ___  ____         _             _ 
@@ -223,9 +221,7 @@ class agv_comms():
         | |  | | \__ \__ \ | (_) | | | |_|
         \_|  |_/_|___/___/_|\___/|_| |_(_)
                                   
-                                  
-                                                
-                                            
+                                                                                  
         """
         # Constants
         self.FINISHED = "finished"
