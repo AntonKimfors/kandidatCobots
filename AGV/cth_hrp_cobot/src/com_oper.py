@@ -128,6 +128,8 @@ class agv_comms():
         if (self.mowerInternalState != data.mowerInternalState):
             self.mowerInternalState = data.mowerInternalState
             self.refresh_view()
+        if (self.mowerInternalState == 4):
+            self.removeLoopDetection()
         
     def callback_battery_status(self,data):
         self.battAVolt = data.batteryAVoltage/1000.0
@@ -184,9 +186,7 @@ class agv_comms():
 
         # IF A pressed - Disable Loop 
         if (data.apress == True):  
-            mode = UInt16()
-            mode.data = 0x111
-            self.pub_mode.publish(mode)
+            self.removeLoopDetection()
 
         if data.ypress == True:
             self.ccpub.publish(self.agv_state)
@@ -213,7 +213,10 @@ class agv_comms():
 
         print('\nCurrent command: %s       Mower State: %s' % (self.betterPrinting (self.current_cmd,15 ), mowerState))
         
-
+    def removeLoopDetection(self):
+        mode = UInt16()
+        mode.data = 0x111
+        self.pub_mode.publish(mode)
 
     def betterPrinting(self,fix,dlen):
         newfix = fix
