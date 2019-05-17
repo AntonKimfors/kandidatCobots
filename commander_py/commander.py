@@ -223,12 +223,12 @@ def station_done(station: int):
     cmd_msgs[station].run = False
     cmd_msgs[station].product_name = ''
 
+    print("Pubing run=false until state=init on station {}".format(
+        str(station)))
     while check_state(station) != INIT:
         publishers[station].publish(cmd_msgs[station])
         rclpy.spin_once(node)
-        print("Pubing run=false until state=init on station {}".format(
-                str(station)))
-        time.sleep(SLEEP_TIME)
+        time.sleep(SLEEP_TIME/2)
 
     move_transport(station)
 
@@ -240,9 +240,9 @@ def move_transport(station: int):
     else:
         next_station = station + 1
 
+    print("Waiting for transport to be in init state")
     while check_state(NO_OF_STATIONS) != INIT:
-        print("Waiting for transport to be in init state")
-        time.sleep(SLEEP_TIME)
+        time.sleep(SLEEP_TIME/2)
         rclpy.spin_once(node)
 
     print("Moving transport to station {}".format(next_station))
@@ -250,20 +250,20 @@ def move_transport(station: int):
         NO_OF_STATIONS], str(next_station))
     send_command(NO_OF_STATIONS)
 
+    print("Waiting for transport to finish")
     while check_state(NO_OF_STATIONS) == EXECUTING:
-        print("Waiting for transport to finish")
-        time.sleep(SLEEP_TIME)
+        time.sleep(SLEEP_TIME/2)
         rclpy.spin_once(node)
 
     cmd_msgs[NO_OF_STATIONS].command = ''
     cmd_msgs[NO_OF_STATIONS].run = False
     cmd_msgs[NO_OF_STATIONS].product_name = ''
 
+    print("Pubing run=false until state=init on transport")
     while check_state(NO_OF_STATIONS) != INIT:
         publishers[NO_OF_STATIONS].publish(cmd_msgs[NO_OF_STATIONS])
         rclpy.spin_once(node)
-        print("Pubing run=false until state=init on transport")
-        time.sleep(SLEEP_TIME)
+        time.sleep(SLEEP_TIME/2)
 
     global transport_pos
     transport_pos = next_station
@@ -278,21 +278,21 @@ def send_command(station: int):
     cmd_msgs[station].run = False
 
     # Waiting for handshake for the command
+    print("Waiting on station {} with the message {}".format(
+        str(station), cmd_msgs[station].command))
     while state_msgs[station].cmd != cmd_msgs[station].command:
         publishers[station].publish(cmd_msgs[station])
-        print("Waiting on station {} with the message {}".format(
-            str(station), cmd_msgs[station].command))
         rclpy.spin_once(node)
-        time.sleep(SLEEP_TIME)
+        time.sleep(SLEEP_TIME/2)
 
     cmd_msgs[station].run = True
 
+    print("Pubing run=true until state=executing on station {}".format(
+              str(station)))
     while check_state(station) != EXECUTING:
         publishers[station].publish(cmd_msgs[station])
         rclpy.spin_once(node)
-        print("Pubing run=true until state=executing on station {}".format(
-              str(station)))
-        time.sleep(SLEEP_TIME)
+        time.sleep(SLEEP_TIME/2)
 
 
 if __name__ == '__main__':
