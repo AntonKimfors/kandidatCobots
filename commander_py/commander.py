@@ -18,9 +18,6 @@ from commander_msgs.msg import State
 # Used for parsing additional arguments to callback function
 from functools import partial
 
-# Generating product order for testing purposes
-import commander_py.generateProductOrder as gpo
-
 # Defining publishers and subscribers
 publishers = []
 subscribers = []
@@ -28,6 +25,9 @@ subscribers = []
 # Defining products, a station array and work order array
 products = ["Sedan", "Jeep"]
 NUMBEROFPRODUCTS = 2
+
+# Input file for productorder:
+product_order_input = "/product_order_input.txt"
 
 # First-in-first-out order, gets popped when going to the first station
 work_order = []
@@ -67,12 +67,10 @@ def main(args=None):
 
     # Read product order
     path = os.path.dirname(
-        os.path.realpath(__file__)) + "/product_order_input.txt"
+        os.path.realpath(__file__)) + product_order_input
     file = open(path, "r")
     product_order = file.readlines()
     file.close
-    # product_order = gpo.generate_product_order(
-    #    NUMBEROFPRODUCTS, products)
 
     # Puts products in work_order in a hardcoded/predefined pattern
     create_work_order(product_order)
@@ -148,12 +146,24 @@ def main(args=None):
 
 
 def state_callback(station, state_msg: str):
+    '''
+    Callback message from the designated station \n
+    Input:
+        station - Which stations state message called
+        state_msg (string) - Which message to call
+    '''
     state_msgs[station] = state_msg
 
 
-# Initializes node, creates publishers and subscribers and initializes the
-# message arrays
 def initialize(NO_OF_STATIONS: int):
+    '''
+    Initializes node, creates publishers and subscribers and initializes the
+    message arrays. \n
+    Input:
+        NO_OF_STATIONS (int) - Number of stations in the production system.
+    Returns:
+        node - Command_node
+    '''
     rclpy.init()
     node = rclpy.create_node('command_node')
 
@@ -179,12 +189,20 @@ def initialize(NO_OF_STATIONS: int):
 
 # Puts products in work_order in a hardcoded/predefined pattern
 def create_work_order(Product_order: list):
+    '''
+    Appends the work_order with the given product_order. \n
+    Input:
+        Product_order (list) - Product order to be produced
+    '''
     for product in Product_order:
         work_order.append(product)
 
 
-# Returns True if all stations are empty, False otherwise
 def is_all_stations_empty():
+    '''
+    Check if all stations are empty. \n
+    Returns True or false
+    '''
     rclpy.spin_once(node)
     for cmd_msg in cmd_msgs:
         if cmd_msg.product_name != '':
@@ -193,9 +211,15 @@ def is_all_stations_empty():
     return True
 
 
-# Checks and returns the state of the station. Prints message if state is
-# not recognized
 def check_state(station: int):
+    '''
+    Checks and returns the state of the station. Prints message if state is
+    not recognized \n
+    Input:
+        station (int) - Which station to check the state for.
+    Returns:
+        state - State message of the given station
+    '''
     state = state_msgs[station].state.lower()
     if not state_status(state):
         print("Unknown state on station {}: {}".format(str(station), state))
@@ -217,8 +241,12 @@ def state_status(state):
         return False
 
 
-# Sets a station to init with handshake
 def station_done(station: int):
+    '''
+    Sets a station to init with handshake \n
+    Input:
+        station (int) - which station is done
+    '''
     cmd_msgs[station].command = ''
     cmd_msgs[station].run = False
     cmd_msgs[station].product_name = ''
@@ -233,8 +261,11 @@ def station_done(station: int):
     move_transport(station)
 
 
-# Moves the transport to the next station
 def move_transport(station: int):
+    ''' Moves the transport to the next station \n
+    Input:
+        station (int) - Current station
+    '''
     if station >= NO_OF_STATIONS - 1:
         next_station = 0
     else:
@@ -271,6 +302,11 @@ def move_transport(station: int):
 
 # Sends command to station and puts run to true when handshake is established
 def send_command(station: int):
+    '''Sends command to station and puts run to true when handshake is
+    established \n
+    Input:
+        station (int) - Current station
+    '''
     # cmd_msgs[station].command = "Assemble in station {}".format(str(station))
     if station != NO_OF_STATIONS:
         cmd_msgs[station].command = COMMAND_ARRAY[station]
