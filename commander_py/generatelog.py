@@ -11,12 +11,8 @@ def createlog():
     if not log_dir.exists():
         os.makedirs(log_dir)
 
-    my_file = Path("{}{}{}{}".format(dirname, relativedirname, currentDate, '.txt'))
-    print(my_file)
-
     my_file = Path("{}{}{}{}".format(
         dirname, relativedirname, currentDate, '.txt'))
-    print(my_file)
 
     if not my_file.exists():
         print('hejhej')
@@ -24,5 +20,27 @@ def createlog():
 
 
 def write_to_log():
-    # TODO
-    
+
+    # if not my_file.exists():
+    with open(logfile, "a+"):
+        # TODO
+
+
+class LogDoesntExist(Exception):
+    def __init__(self, logfile):
+        self.logfile = logfile
+        
+        if not self.logfile.exists():
+            print('hejhej')
+
+
+        if len(self.productOrder) < self.number_of_products:
+            self.diffSym = '<'
+        else:
+            self.diffSym = '>'
+
+    def __str__(self):
+        return "The size of the product order does not match the " \
+                "given numberOfProducts variable {} {} {}".format(
+                    len(self.productOrder), self.diffSym,
+                    self.number_of_products)
