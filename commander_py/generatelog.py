@@ -2,15 +2,25 @@ import datetime
 import os
 from pathlib import Path
 
+# Skapa en metod för allt, kolla först om mappen finns, sen om filen finns, sen skriv till filen
+# jämför med nuvarande datum för att skapa fil.
 
-def createlog():
+
+def write_to_log(msg: str):
+    # check if the log folder exists, if not then create it
     dirname = os.path.dirname(__file__)
-    relativedirname = os.path.join(dirname, '/logs/')
+    print(dirname)
+    # relativedirname = os.path.join(dirname, '/logs/')
+    
     currentDate = datetime.date.today()
-    log_dir = Path("{}{}".format(dirname, relativedirname))
+    print(currentDate)
+    # log_dir = Path("{}{}".format(dirname, relativedirname))
+    log_dir = Path(dirname+'/logs/'
     if not log_dir.exists():
         os.makedirs(log_dir)
 
+    # find the path to todays log and check if it exists, if not
+    # create it
     my_file = Path("{}{}{}{}".format(
         dirname, relativedirname, currentDate, '.txt'))
 
@@ -18,29 +28,9 @@ def createlog():
         print('hejhej')
         logfile = open(my_file, 'w+')
 
-
-def write_to_log():
-
-    # if not my_file.exists():
+    # open todays logfile and begin writing to it
     with open(logfile, "a+"):
-        # TODO
+        logfile.append(msg)
+    print(logfile)
 
-
-class LogDoesntExist(Exception):
-    def __init__(self, logfile):
-        self.logfile = logfile
-        
-        if not self.logfile.exists():
-            print('hejhej')
-
-
-        if len(self.productOrder) < self.number_of_products:
-            self.diffSym = '<'
-        else:
-            self.diffSym = '>'
-
-    def __str__(self):
-        return "The size of the product order does not match the " \
-                "given numberOfProducts variable {} {} {}".format(
-                    len(self.productOrder), self.diffSym,
-                    self.number_of_products)
+write_to_log('test1')
