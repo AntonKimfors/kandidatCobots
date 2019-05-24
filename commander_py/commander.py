@@ -15,6 +15,8 @@ import os
 from commander_msgs.msg import Command
 from commander_msgs.msg import State
 
+import commander_py.generatelog as log
+
 # Used for parsing additional arguments to callback function
 from functools import partial
 
@@ -27,7 +29,7 @@ products = ["Sedan", "Jeep"]
 NUMBEROFPRODUCTS = 2
 
 # Input file for productorder:
-product_order_input = "/product_order_input.txt"
+product_order_input = '/product_order_input.txt'
 
 # First-in-first-out order, gets popped when going to the first station
 work_order = []
@@ -66,8 +68,8 @@ def main(args=None):
     node = initialize(NO_OF_STATIONS)
 
     # Read product order
-    path = os.path.dirname(
-        os.path.realpath(__file__)) + product_order_input
+    dirname = os.path.dirname(__file__)
+    path = "{}{}".format(dirname, product_order_input)
     file = open(path, "r")
     product_order = file.readlines()
     file.close
