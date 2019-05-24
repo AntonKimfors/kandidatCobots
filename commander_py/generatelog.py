@@ -1,36 +1,41 @@
 import datetime
+import time
 import os
 from pathlib import Path
 
-# Skapa en metod för allt, kolla först om mappen finns, sen om filen finns, sen skriv till filen
+# Skapa en metod för allt, kolla först om mappen finns, sen om filen finns,
+#  sen skriv till filen
 # jämför med nuvarande datum för att skapa fil.
 
 
 def write_to_log(msg: str):
     # check if the log folder exists, if not then create it
     dirname = os.path.dirname(__file__)
-    print(dirname)
-    # relativedirname = os.path.join(dirname, '/logs/')
-    
+    # print(dirname)
+    relativedirname = os.path.join(dirname, '/logs/')
+
     currentDate = datetime.date.today()
-    print(currentDate)
-    # log_dir = Path("{}{}".format(dirname, relativedirname))
-    log_dir = Path(dirname+'/logs/'
+    # print(currentDate)
+    log_dir = Path("{}{}".format(dirname, relativedirname))
+    # log_dir = Path(dirname+'/logs/')
     if not log_dir.exists():
         os.makedirs(log_dir)
 
     # find the path to todays log and check if it exists, if not
     # create it
+
     my_file = Path("{}{}{}{}".format(
         dirname, relativedirname, currentDate, '.txt'))
 
-    if not my_file.exists():
-        print('hejhej')
-        logfile = open(my_file, 'w+')
+    # if not my_file.exists():
+    #    print('hejhej')
+    #    f = open(my_file, 'w+')
+
+    currentTime = datetime.datetime.now().strftime('%H:%M:%S')
 
     # open todays logfile and begin writing to it
-    with open(logfile, "a+"):
-        logfile.append(msg)
-    print(logfile)
+    with open(my_file, "a") as log:
+        log.write(currentTime + "_" + msg + '\n')
 
-write_to_log('test1')
+
+# write_to_log('test1')

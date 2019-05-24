@@ -15,8 +15,8 @@ import os
 from commander_msgs.msg import Command
 from commander_msgs.msg import State
 
-import commander_py.generatelog as log
-
+# import commander_py.generatelog as log # for ubuntu
+import generatelog as log               # for everything else
 # Used for parsing additional arguments to callback function
 from functools import partial
 
@@ -85,15 +85,17 @@ def main(args=None):
 
         # From last station index down to 0
         for station in range(NO_OF_STATIONS-1, -1, -1):
-
-            print("Checking station {}".format(str(station)))
+            msg = "Checking station {}".format(str(station))
+            log.write_to_log(msg)
+            print(msg)
             rclpy.spin_once(node)
             time.sleep(SLEEP_TIME)
 
             # If station is not empty
             if cmd_msgs[station].product_name:
-
-                print("Checking if station {} is done".format(str(station)))
+                msg = "Checking if station {} is done".format(str(station))
+                log.write_to_log(msg)
+                print(msg)
                 time.sleep(SLEEP_TIME)
 
                 if (check_state(station) == FINISHED and
@@ -113,34 +115,43 @@ def main(args=None):
                         send_command(station+1)
 
                     else:
-                        print("Station {} is done but the \
-                              station ahead is not ready".format(str(station)))
+                        msg = "Station {} is done but the \
+                              station ahead is not ready".format(str(station))
+                        log.write_to_log(msg)
+                        print(msg)
 
                 else:
-                    print('''Station {} is not done, or the transport is not in
-                            position'''.format(str(station)))
+                    msg = '''Station {} is not done, or the transport is not in
+                            position'''.format(str(station))
+                    log.write_to_log(msg)
+                    print(msg)
 
             else:
                 # If nothing in the first station but the work_order is not
                 # empty
                 if station == 0 and len(work_order) != 0:
                     if check_state(station) != INIT:
-
-                        print("Station {} not ready for new work order".format(
-                            str(station)))
+                        msg = "Station {} not ready for new work order".format(
+                            str(station))
+                        log.write_to_log(msg)
+                        print(msg)
 
                     else:
-                        print("Send in the next order to station {}".format(
-                              str(station)))
+                        msg = "Send in the next order to station {}".format(
+                              str(station))
+                        log.write_to_log(msg)
+                        print(msg)
                         cmd_msgs[station].product_name = work_order.pop(
                             0).rstrip()
                         send_command(station)
                 else:
-                    print("Nothing to do")
+                    msg = "Nothing to do"
+                    log.write_to_log(msg)
+                    print(msg)
                     time.sleep(SLEEP_TIME)
 
         all_stations_empty = is_all_stations_empty()
-
+    
     print(work_order)
 
     node.destroy_node()
@@ -224,7 +235,9 @@ def check_state(station: int):
     '''
     state = state_msgs[station].state.lower()
     if not state_status(state):
-        print("Unknown state on station {}: {}".format(str(station), state))
+        msg = "Unknown state on station {}: {}".format(str(station), state)
+        log.write_to_log(msg)
+        print(msg)
 
     return state
 
@@ -253,8 +266,11 @@ def station_done(station: int):
     cmd_msgs[station].run = False
     cmd_msgs[station].product_name = ''
 
-    print("Pubing run=false until state=init on station {}".format(
-        str(station)))
+    msg = "Pubing run=false until state=init on station {}".format(
+        str(station))
+    log.write_to_log(msg)
+    print(msg)
+
     while check_state(station) != INIT:
         publishers[station].publish(cmd_msgs[station])
         rclpy.spin_once(node)
@@ -273,17 +289,24 @@ def move_transport(station: int):
     else:
         next_station = station + 1
 
-    print("Waiting for transport to be in init state")
+    msg = "Waiting for transport to be in init state"
+    log.write_to_log(msg)
+    print(msg)
+
     while check_state(NO_OF_STATIONS) != INIT:
         time.sleep(SLEEP_TIME/2)
         rclpy.spin_once(node)
-
-    print("Moving transport to station {}".format(next_station))
+    msg = "Moving transport to station {}".format(next_station)
+    log.write_to_log(msg)
+    print(msg)
     cmd_msgs[NO_OF_STATIONS].command = "{}: {}".format(COMMAND_ARRAY[
         NO_OF_STATIONS], str(next_station))
     send_command(NO_OF_STATIONS)
 
-    print("Waiting for transport to finish")
+    msg = "Waiting for transport to finish"
+    log.write_to_log(msg)
+    print(msg)
+
     while check_state(NO_OF_STATIONS) == EXECUTING:
         time.sleep(SLEEP_TIME/2)
         rclpy.spin_once(node)
@@ -292,7 +315,10 @@ def move_transport(station: int):
     cmd_msgs[NO_OF_STATIONS].run = False
     cmd_msgs[NO_OF_STATIONS].product_name = ''
 
-    print("Pubing run=false until state=init on transport")
+    msg = "Pubing run=false until state=init on transport"
+    log.write_to_log(msg)
+    print(msg)
+
     while check_state(NO_OF_STATIONS) != INIT:
         publishers[NO_OF_STATIONS].publish(cmd_msgs[NO_OF_STATIONS])
         rclpy.spin_once(node)
@@ -316,17 +342,21 @@ def send_command(station: int):
     cmd_msgs[station].run = False
 
     # Waiting for handshake for the command
-    print("Waiting on station {} with the message {}".format(
-        str(station), cmd_msgs[station].command))
+    msg = "Waiting on station {} with the message {}".format(
+        str(station), cmd_msgs[station].command)
+    log.write_to_log(msg)
+    print(msg)
+
     while state_msgs[station].cmd != cmd_msgs[station].command:
         publishers[station].publish(cmd_msgs[station])
         rclpy.spin_once(node)
         time.sleep(SLEEP_TIME/2)
 
     cmd_msgs[station].run = True
-
-    print("Pubing run=true until state=executing on station {}".format(
-              str(station)))
+    msg = "Pubing run=true until state=executing on station {}".format(
+              str(station))
+    log.write_to_log(msg)
+    print(msg)
     while check_state(station) != EXECUTING:
         publishers[station].publish(cmd_msgs[station])
         rclpy.spin_once(node)
