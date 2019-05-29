@@ -32,7 +32,7 @@ publishers = []
 subscribers = []
 
 # Defining products, a station array and work order array
-products = Config.get('ProductParameters', 'Producttypes')
+products = Config.get('Product', 'Producttypes')
 NUMBEROFPRODUCTS = len(products)
 
 # Input file for productorder:
@@ -54,14 +54,14 @@ FINISHED = 'finished'
 node = None
 
 # Number of stations, hardcoded/predefined
-NO_OF_STATIONS = Config.get('StationParameters', 'numberOfStations')
+NO_OF_STATIONS = Config.get('Station', 'numberOfStations')
 
 # Sleep time where sleep is implemented
-SLEEP_TIME = 0.5
+SLEEP_TIME = Config.get('General', 'SLEEP_TIME')
 
 # Messages for the 3 different stations and transport
 # COMMAND_ARRAY = ["Kit", "Assemble", "Screw", "Move transport to station"]
-COMMAND_ARRAY = Config.get('StationParameters', 'Stationtypes').split()
+COMMAND_ARRAY = Config.get('Station', 'Stationtypes').split()
 
 # Tracks which station the transport is on
 transport_pos = 0
