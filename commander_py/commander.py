@@ -11,22 +11,29 @@
 import rclpy
 import time
 import os
+import configparser
 
 from commander_msgs.msg import Command
 from commander_msgs.msg import State
 
 # import commander_py.generatelog as log # for ubuntu
 import generatelog as log               # for everything else
+
 # Used for parsing additional arguments to callback function
 from functools import partial
+
+# Read from config file:
+CONFIGFILEPATH = "{}/{}".format(os.path.dirname(__file__), 'config.ini')
+Config = configparser.ConfigParser()
+Config.read(CONFIGFILEPATH)
 
 # Defining publishers and subscribers
 publishers = []
 subscribers = []
 
 # Defining products, a station array and work order array
-products = ["Sedan", "Jeep"]
-NUMBEROFPRODUCTS = 2
+products = Config.get('ProductParameters', 'Producttypes')
+NUMBEROFPRODUCTS = len(products)
 
 # Input file for productorder:
 product_order_input = '/product_order_input.txt'
@@ -47,13 +54,14 @@ FINISHED = 'finished'
 node = None
 
 # Number of stations, hardcoded/predefined
-NO_OF_STATIONS = 3
+NO_OF_STATIONS = Config.get('StationParameters', 'numberOfStations')
 
 # Sleep time where sleep is implemented
 SLEEP_TIME = 0.5
 
 # Messages for the 3 different stations and transport
-COMMAND_ARRAY = ["Kit", "Assemble", "Screw", "Move transport to station"]
+# COMMAND_ARRAY = ["Kit", "Assemble", "Screw", "Move transport to station"]
+COMMAND_ARRAY = Config.get('StationParameters', 'Stationtypes').split()
 
 # Tracks which station the transport is on
 transport_pos = 0
