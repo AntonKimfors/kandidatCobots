@@ -1,3 +1,14 @@
+#   -------------------------------------------------------------------------------
+#   Description:
+#   Creates and appends a daily logfile.
+#   Call method write_to_log to write to the daily log-file.
+#   If the file does not exist it creates a new one.
+#   -------------------------------------------------------------------------------
+#   Author: Sebastian Brink
+#   Kandidatarbete COBOTS 2019
+#   V.1.0.0
+#   -------------------------------------------------------------------------------
+
 import datetime
 import time
 import os
@@ -35,7 +46,7 @@ def write_to_log(msg: str):
 
     # open todays logfile and begin writing to it
     with open(my_file, "a") as log:
-        log.write(currentTime + "_" + msg + '\n')
+        log.write('[{}] \t {} \n'.format(currentTime, msg))
 
 
 # write_to_log('test1')
