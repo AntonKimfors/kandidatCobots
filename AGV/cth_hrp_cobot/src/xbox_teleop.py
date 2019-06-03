@@ -68,12 +68,14 @@ class xbox_teleop():
             self.buttonpub.publish(self.buttonpress)
         # RB Pressed - Unlock Movement
         if (data.buttons[4]== 1):
+            print('unlock')
             self.linConst = 0.4
             self.angConst = 0.7
             self.buttonpress.rbpress = True
             self.buttonpub.publish(self.buttonpress)
         # LB Pressed - Lock Movement
         if (data.buttons[5]== 1):
+            print('lock')
             self.linConst = 0.0
             self.angConst = 0.0
             self.buttonpress.lbpress = True
@@ -86,8 +88,14 @@ class xbox_teleop():
         if (data.buttons[7]== 1):
             buttonpress.startpress = True
             buttonpub.publish(buttonpress)
-
+    
+        
+        print ('linConst %.1f  angConst: %.1f                            ' % (self.angConst, self.linConst))
+        print('')
         self.pub.publish(self.twist)
+
+
+
 
 
 if __name__ == '__main__':

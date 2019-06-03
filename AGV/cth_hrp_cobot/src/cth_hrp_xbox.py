@@ -32,7 +32,7 @@ class agv_comms():
         rospy.init_node('cth_hrp_xbox')
 
 
-        self.refresh_view()
+        #self.refresh_view()
         rospy.spin()
     
     def callback_joy(self,data):
@@ -102,9 +102,9 @@ class agv_comms():
             self.mowerInternalState = data.mowerInternalState
             self.refresh_view()
 
-        #if in state PENDING_START, try to remove loop detection - needs testing not sure of flow.
-        if (self.mowerInternalState == 4 and self.loopState != 'Off'):
-            self.removeLoopDetect()
+        #if in state STOPPED and loopstate != Off, try to remove loop detection - needs testing not sure of flow.
+        if (self.mowerInternalState == 2 and self.loopState != 'Off'):
+            self.removeLoopDetection()
             self.refresh_view()
         
     def callback_battery_status(self,data):
@@ -164,6 +164,7 @@ class agv_comms():
     # Y - Resend State
     def yPressed(self):
         self.last_sent_cmd = self.current_state
+        self.agv_state.state = self.current_state
         self.ccpub.publish(self.agv_state)
    
     #Start and Back Pressed - Shutdown
@@ -181,19 +182,16 @@ class agv_comms():
  
     def lbPressed(self):
         #Locked Driving
-        self.lockedState = True
         self.linConst = 0.0
         self.angConst = 0.0
         
     def rbPressed(self):    
         #Unlcked Driving
-        self.lockedState = False
         self.linConst = 0.4
         self.angConst = 0.7
         
     def removeLoopDetection(self):
         #Removes Loop Detection
-        print('removing loop')
         mode = UInt16()
         mode.data = 0x111
         self.pub_mode.publish(mode)
@@ -242,7 +240,7 @@ class agv_comms():
         self.mowerState = self.mowerStateToString(self.mowerInternalState)
         
     def getDriveState(self):
-        if self.lockedState == True:
+        if self.linConst < 0.1:
             self.drivingState = "Locked"
         else:
             self.drivingState =  "Unlocked"
@@ -268,10 +266,7 @@ class agv_comms():
          | | _ __  _| |_ _  __ _| |_ _______ 
          | || '_ \| | __| |/ _` | | |_  / _ \ 
         _| || | | | | |_| | (_| | | |/ /  __/
-        \___/_| |_|_|\__|_|\__,_|_|_/___\___|
-                                            
-
-        """
+        \___/_| |_|_|\__|_|\__,_|_|_/___\___|\n\n"""
 
         self.TEXT_FINISHED = """
         ______ _       _     _              _ 
@@ -279,10 +274,7 @@ class agv_comms():
         | |_   _ _ __  _ ___| |__   ___  __| |
         |  _| | | '_ \| / __| '_ \ / _ \/ _` |
         | |   | | | | | \__ \ | | |  __/ (_| |
-        \_|   |_|_| |_|_|___/_| |_|\___|\__,_|
-                                                                       
-
-        """
+        \_|   |_|_| |_|_|___/_| |_|\___|\__,_|\n\n"""
 
         self.TEXT_EXECUTING = """
          _____                    _   _             
@@ -292,18 +284,14 @@ class agv_comms():
         | |___>  <  __/ (__| |_| | |_| | | | | (_| |
         \____/_/\_\___|\___|\__,_|\__|_|_| |_|\__, |
                                                __/ |
-                                              |___/                                                 
-        """
+                                              |___/ \n"""
         self.TEXT_MISSION = """
         ___  ____         _             _ 
         |  \/  (_)       (_)           | |
         | .  . |_ ___ ___ _  ___  _ __ | |
         | |\/| | / __/ __| |/ _ \| '_ \| |
         | |  | | \__ \__ \ | (_) | | | |_|
-        \_|  |_/_|___/___/_|\___/|_| |_(_)
-                                  
-                                                                                  
-        """
+        \_|  |_/_|___/___/_|\___/|_| |_(_)\n\n"""
         # Constants
         self.FINISHED = "finished"
         self.EXECUTING = "executing"
@@ -329,7 +317,6 @@ class agv_comms():
         self.agv_state.cmd = ""
         self.agv_state.state = ""
         self.bat_state = "UNKNOWN!"
-        self.lockedState = True
         self.loopState = 'On'
         
         #Twist Message
